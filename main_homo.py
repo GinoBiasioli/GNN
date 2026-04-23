@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import random
 import logging
+import sys
 from tqdm import tqdm
 import torch.nn.functional as F
 from torch.nn import Module, ModuleList, Linear, ModuleDict
@@ -105,11 +106,30 @@ with open(os.path.join(root_path, "data", "dataset_features.json"), "r") as file
 
 list(datasets_info.keys())
 
-#dataset = "BPI20_RequestForPayment"
-#dataset = "bpi_2012"
-#dataset = "bpi_2013"
-#dataset = "sp2020"
-dataset = "tiny_sp2020"
+DEFAULT_DATASET = "tiny_sp2020"
+
+
+def resolve_dataset_name(available_datasets, default_dataset):
+    cli_dataset = sys.argv[1] if len(sys.argv) > 1 else None
+    env_dataset = os.environ.get("THESIS_DATASET")
+    dataset_name = cli_dataset or env_dataset or default_dataset
+
+    if dataset_name not in available_datasets:
+        available = ", ".join(sorted(available_datasets))
+        raise ValueError(
+            f"Unknown dataset '{dataset_name}'. "
+            f"Choose one of: {available}"
+        )
+
+    return dataset_name
+
+
+dataset = resolve_dataset_name(datasets_info.keys(), DEFAULT_DATASET)
+print(f"Selected dataset: {dataset}")
+print(f"Results directory: {os.path.join(results_root_dir, dataset)}")
+
+results_dir = os.path.join(results_root_dir, dataset)
+os.makedirs(results_dir, exist_ok=True)
 
 
 #%%
@@ -151,16 +171,41 @@ data_dir_graphs
 def load_dataset(name):
     path = os.path.join(data_dir_graphs, dataset, name)
     size = os.path.getsize(path) / (1024**3)
-    print(f"\nLoading {name} ({size:.2f} GB)")
-    return torch.load(path, weights_only=False)
+    print(f'\nImporting "{name}" ({size:.2f} GB)')
+    loaded_data = torch.load(path, weights_only=False)
+
+    summary = {
+        "dataset": dataset,
+        "file_name": name,
+        "graphs_count": len(loaded_data),
+        "file_size_gb": round(size, 4),
+    }
+
+    print(
+        f'Imported "{name}": '
+        f'{summary["graphs_count"]} graphs'
+    )
+
+    return loaded_data, summary
+
+dataset_import_summaries = []
 
 for name in tqdm(["train_set_homo.pt","validation_set_homo.pt","test_set_homo.pt"]):
     if name == "train_set_homo.pt":
-        X_TRAIN = load_dataset(name)
+        X_TRAIN, summary = load_dataset(name)
     elif name == "validation_set_homo.pt":
-        X_VALID = load_dataset(name)
+        X_VALID, summary = load_dataset(name)
     else:
-        X_TEST = load_dataset(name)
+        X_TEST, summary = load_dataset(name)
+
+    dataset_import_summaries.append(summary)
+
+dataset_import_summary_path = os.path.join(results_dir, "dataset_import_summary.csv")
+pd.DataFrame(dataset_import_summaries).to_csv(
+    dataset_import_summary_path,
+    index=False,
+)
+print(f"Saved dataset import summary to: {dataset_import_summary_path}")
         
 #%%
 
@@ -690,6 +735,7 @@ results = results.sort_values(by="valid_loss")
 results_dir = os.path.join(results_root_dir, dataset)
 os.makedirs(results_dir, exist_ok=True)
 results.to_csv(os.path.join(results_dir, "hyp_params_search.csv"), sep=",", index=False)
+print(f"Saved hyperparameter search results to: {results_dir}")
 def create_df(results):
     res = {}
 
@@ -736,6 +782,7 @@ def test_multi(config, outputcat, outputreal, num_runs=10):
     )
 
     print(pd.DataFrame(data={"mean": means, "std": stds}))
+    print(f"Saved final evaluation results to: {save_path}")
 
     return res
 
