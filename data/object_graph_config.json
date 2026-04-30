@@ -1,0 +1,31 @@
+{
+    "bpi_2012": {
+        "case_id_col": "CaseID",
+        "timestamp_col": "time:timestamp",
+        "activity_col": "concept:name",
+        "target_col": "next_activity",
+        "min_prefix_length": 2,
+        "event_features": {
+            "categorical": [
+                "concept:name",
+                "lifecycle:transition"
+            ],
+            "numeric": [
+                "time:timestamp",
+                "(case) AMOUNT_REQ"
+            ]
+        },
+        "object_nodes": {
+            "resource": {
+                "source_col": "org:resource",
+                "node_type": "resource",
+                "edge_type": "interacts",
+                "encode_source_as_feature": true
+            }
+        },
+        "exclude_cols": [
+            "Activity",
+            "org:resource"
+        ]
+    }
+}

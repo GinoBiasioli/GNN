@@ -13,6 +13,7 @@ env/
 results/
 data/datasets/processed/
 data/datasets/hom_graphs/
+data/datasets/object_hetero_graphs/
 data/datasets/dataset_features.json
 
 *.pt

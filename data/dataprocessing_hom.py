@@ -76,8 +76,8 @@ print(root_path, data_dir_processed, data_dir_graphs, sep="\n")
 
 
 #dataset = "BPI20_RequestForPayment"
-#dataset = "bpi_2012"
-dataset = "bpi_2013"
+dataset = "bpi_2012"
+#dataset = "bpi_2013"
 #dataset = "sp2020"
 
 
