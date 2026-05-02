@@ -111,9 +111,24 @@ def parse_args() -> argparse.Namespace:
         help="Number of final repeated test runs.",
     )
     parser.add_argument(
+        "--smoke-test",
+        action="store_true",
+        help="Run the smoke-test configuration before the selected workflow.",
+    )
+    parser.add_argument(
         "--smoke-only",
         action="store_true",
-        help="Run only the smoke-test configuration and skip Ax/final repeated runs.",
+        help="Run only the smoke-test configuration and skip search/final repeated runs.",
+    )
+    parser.add_argument(
+        "--skip-search",
+        action="store_true",
+        help="Load the first row from the saved hyperparameter CSV and skip Ax search.",
+    )
+    parser.add_argument(
+        "--search-only",
+        action="store_true",
+        help="Run Ax search, save the hyperparameter CSV, and skip final repeated runs.",
     )
     return parser.parse_args()
 
@@ -527,6 +542,38 @@ def create_df(results: list[dict]) -> tuple[pd.DataFrame, pd.Series, pd.Series]:
     return result_table, result_table.mean(numeric_only=True), result_table.std(numeric_only=True)
 
 
+def load_best_hyperparameters(search_results_path: str) -> dict:
+    if not os.path.exists(search_results_path):
+        raise FileNotFoundError(
+            f"Could not find saved hyperparameter search results: {search_results_path}. "
+            "Run without --skip-search first."
+        )
+
+    search_results = pd.read_csv(search_results_path)
+    if search_results.empty:
+        raise ValueError(f"Hyperparameter search file is empty: {search_results_path}")
+
+    if "valid_loss" in search_results.columns:
+        search_results = search_results.sort_values(by="valid_loss")
+
+    best_row = search_results.iloc[0]
+    required_columns = ["hid", "layers", "lr", "aggregation", "batch_size"]
+    missing_columns = [col for col in required_columns if col not in best_row.index]
+    if missing_columns:
+        raise ValueError(
+            f"Hyperparameter search file is missing columns {missing_columns}: "
+            f"{search_results_path}"
+        )
+
+    return {
+        "hid": int(best_row["hid"]),
+        "layers": int(best_row["layers"]),
+        "lr": float(best_row["lr"]),
+        "aggregation": str(best_row["aggregation"]),
+        "batch_size": int(best_row["batch_size"]),
+    }
+
+
 def test_multi(
     config: dict,
     train_graphs: list[HeteroData],
@@ -630,6 +677,10 @@ def main() -> None:
     )
     print("Categorical outputs:", output_cat)
     print("Numerical outputs:", output_real)
+    search_results_path = os.path.join(
+        results_dir,
+        "hyp_params_search_object_hetero.csv",
+    )
 
     debug_smoke_test_config = {
         "hid": 128,
@@ -670,74 +721,83 @@ def main() -> None:
             )
         return {"valid_loss": valid_loss}
 
-    print("\nRunning smoke test before Ax optimize...")
-    smoke_test_result = train_evaluate(debug_smoke_test_config)
-    print("Smoke test result:")
-    print(smoke_test_result)
+    if args.smoke_test or args.smoke_only:
+        print("\nRunning smoke test...")
+        smoke_test_result = train_evaluate(debug_smoke_test_config)
+        print("Smoke test result:")
+        print(smoke_test_result)
 
     if args.smoke_only:
         print("Smoke-only mode selected. Skipping Ax optimization and final runs.")
         return
 
-    best_parameters, values, experiment, _ = optimize(
-        parameters=[
-            {
-                "name": "hid",
-                "type": "choice",
-                "values": [128],
-                "value_type": "int",
-                "is_ordered": True,
-                "sort_values": False,
-            },
-            {
-                "name": "layers",
-                "type": "choice",
-                "values": [2, 4],
-                "value_type": "int",
-                "is_ordered": True,
-                "sort_values": False,
-            },
-            {
-                "name": "lr",
-                "type": "range",
-                "bounds": [1e-4, 1e-2],
-                "value_type": "float",
-                "log_scale": True,
-            },
-            {
-                "name": "aggregation",
-                "type": "choice",
-                "values": ["sum", "mean", "max"],
-                "value_type": "str",
-            },
-            {
-                "name": "batch_size",
-                "type": "choice",
-                "values": [16, 64, 128, 256, 512],
-                "value_type": "int",
-                "is_ordered": True,
-                "sort_values": False,
-            },
-        ],
-        evaluation_function=train_evaluate,
-        objective_name="valid_loss",
-        arms_per_trial=1,
-        minimize=True,
-        random_seed=123,
-        total_trials=args.trials,
-    )
+    if args.skip_search:
+        print(f"Skipping Ax search. Loading best hyperparameters from: {search_results_path}")
+    else:
+        best_parameters, values, experiment, _ = optimize(
+            parameters=[
+                {
+                    "name": "hid",
+                    "type": "choice",
+                    "values": [128],
+                    "value_type": "int",
+                    "is_ordered": True,
+                    "sort_values": False,
+                },
+                {
+                    "name": "layers",
+                    "type": "choice",
+                    "values": [2, 4],
+                    "value_type": "int",
+                    "is_ordered": True,
+                    "sort_values": False,
+                },
+                {
+                    "name": "lr",
+                    "type": "range",
+                    "bounds": [1e-4, 1e-2],
+                    "value_type": "float",
+                    "log_scale": True,
+                },
+                {
+                    "name": "aggregation",
+                    "type": "choice",
+                    "values": ["sum", "mean", "max"],
+                    "value_type": "str",
+                },
+                {
+                    "name": "batch_size",
+                    "type": "choice",
+                    "values": [16, 64, 128, 256, 512],
+                    "value_type": "int",
+                    "is_ordered": True,
+                    "sort_values": False,
+                },
+            ],
+            evaluation_function=train_evaluate,
+            objective_name="valid_loss",
+            arms_per_trial=1,
+            minimize=True,
+            random_seed=123,
+            total_trials=args.trials,
+        )
 
+        print(best_parameters)
+        means, _ = values
+        print(means)
+        print(experiment)
+
+        search_results = exp_to_df(experiment).sort_values(by="valid_loss")
+        search_results.to_csv(search_results_path, index=False)
+        print(f"Saved object-hetero hyperparameter search results to: {search_results_path}")
+
+    best_parameters = load_best_hyperparameters(search_results_path)
+    print("Best hyperparameters loaded from CSV first row:")
     print(best_parameters)
-    means, _ = values
-    print(means)
-    print(experiment)
 
-    search_results = exp_to_df(experiment).sort_values(by="valid_loss")
-    search_results.to_csv(
-        os.path.join(results_dir, "hyp_params_search_object_hetero.csv"),
-        index=False,
-    )
-    print(f"Saved object-hetero hyperparameter search results to: {results_dir}")
+    if args.search_only:
+        print("Search-only mode selected. Skipping final repeated runs.")
+        return
 
     test_multi(
         best_parameters,
