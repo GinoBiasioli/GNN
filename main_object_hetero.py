@@ -2,10 +2,13 @@ import argparse
 import json
 import logging
 import os
+import platform
 import random
+import time
 import traceback
 import warnings
 from copy import deepcopy
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -139,6 +142,80 @@ def set_random_seeds(seed: int = 0) -> None:
         torch.cuda.manual_seed(seed)
     random.seed(seed)
     np.random.seed(seed)
+
+
+def format_elapsed_time(elapsed_seconds: float) -> str:
+    return (
+        f"{elapsed_seconds:.2f}s "
+        f"({elapsed_seconds / 60:.2f} min, {elapsed_seconds / 3600:.2f} h)"
+    )
+
+
+def get_machine_report(device: torch.device) -> dict:
+    report = {
+        "timestamp": datetime.now().isoformat(timespec="seconds"),
+        "hostname": platform.node(),
+        "platform": platform.platform(),
+        "python_version": platform.python_version(),
+        "cpu_count": os.cpu_count(),
+        "torch_version": torch.__version__,
+        "torch_cuda_version": torch.version.cuda,
+        "cuda_available": torch.cuda.is_available(),
+        "device": str(device),
+        "gpu_count": torch.cuda.device_count(),
+        "gpu_name": None,
+        "gpu_total_memory_gb": None,
+        "gpu_capability": None,
+    }
+
+    if torch.cuda.is_available():
+        gpu_index = device.index if device.index is not None else torch.cuda.current_device()
+        props = torch.cuda.get_device_properties(gpu_index)
+        report.update(
+            {
+                "gpu_name": props.name,
+                "gpu_total_memory_gb": round(props.total_memory / (1024**3), 3),
+                "gpu_capability": f"{props.major}.{props.minor}",
+            }
+        )
+
+    return report
+
+
+def print_runtime_report(stage: str, elapsed_seconds: float, machine_report: dict) -> None:
+    print("\nRuntime report")
+    print(f"Stage: {stage}")
+    print(f"Elapsed: {format_elapsed_time(elapsed_seconds)}")
+    print(f"Device: {machine_report['device']}")
+    print(f"GPU: {machine_report['gpu_name']}")
+    print(f"GPU memory (GB): {machine_report['gpu_total_memory_gb']}")
+    print(f"Torch: {machine_report['torch_version']}")
+    print(f"CUDA available: {machine_report['cuda_available']}")
+    print(f"CUDA version: {machine_report['torch_cuda_version']}")
+    print(f"CPU count: {machine_report['cpu_count']}")
+    print(f"Platform: {machine_report['platform']}")
+
+
+def append_runtime_report(
+    results_dir: str,
+    dataset: str,
+    prediction_task: str,
+    stage: str,
+    elapsed_seconds: float,
+    machine_report: dict,
+) -> None:
+    record = {
+        "dataset": dataset,
+        "prediction_task": prediction_task,
+        "stage": stage,
+        "elapsed_seconds": round(elapsed_seconds, 4),
+        "elapsed_minutes": round(elapsed_seconds / 60, 4),
+        "elapsed_hours": round(elapsed_seconds / 3600, 4),
+        **machine_report,
+    }
+    path = os.path.join(results_dir, "runtime_report_object_hetero.csv")
+    report = pd.DataFrame([record])
+    report.to_csv(path, mode="a", header=not os.path.exists(path), index=False)
 
 
 def load_dataset_file(graph_dir: str, dataset: str, file_name: str) -> tuple[list[HeteroData], dict]:
@@ -592,6 +669,7 @@ def test_multi(
 
     for run_idx in range(num_runs):
         print(f"Run {run_idx}")
+        run_start_time = time.perf_counter()
         _, net = train_object_hgnn(
             config,
             train_graphs,
@@ -610,6 +688,10 @@ def test_multi(
                 output_real,
                 device,
             )
+        )
+        results[-1]["run_elapsed_seconds"] = round(
+            time.perf_counter() - run_start_time,
+            4,
         )
         print("RES:")
         print(results[-1])
@@ -649,9 +731,11 @@ def main() -> None:
     set_random_seeds(0)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    machine_report = get_machine_report(device)
     print(root_path, graph_dir, results_dir, sep="\n")
     print(f"Selected dataset: {args.dataset}")
     print(f"Using device: {device}")
+    print_runtime_report("machine_setup", 0.0, machine_report)
 
     x_train, x_valid, x_test, import_summaries = load_object_graph_splits(
         graph_dir,
@@ -734,6 +818,7 @@ def main() -> None:
     if args.skip_search:
         print(f"Skipping Ax search. Loading best hyperparameters from: {search_results_path}")
     else:
+        search_start_time = time.perf_counter()
         best_parameters, values, experiment, _ = optimize(
             parameters=[
                 {
@@ -768,7 +853,7 @@ def main() -> None:
                 {
                     "name": "batch_size",
                     "type": "choice",
-                    "values": [16, 64, 128, 256, 512],
+                    "values": [64, 128, 256],
                     "value_type": "int",
                     "is_ordered": True,
                     "sort_values": False,
@@ -781,6 +866,7 @@ def main() -> None:
             random_seed=123,
             total_trials=args.trials,
         )
+        search_elapsed_seconds = time.perf_counter() - search_start_time
 
         print(best_parameters)
         means, _ = values
@@ -790,6 +876,19 @@ def main() -> None:
         search_results = exp_to_df(experiment).sort_values(by="valid_loss")
         search_results.to_csv(search_results_path, index=False)
         print(f"Saved object-hetero hyperparameter search results to: {search_results_path}")
+        print_runtime_report(
+            "hyperparameter_search",
+            search_elapsed_seconds,
+            machine_report,
+        )
+        append_runtime_report(
+            results_dir,
+            args.dataset,
+            prediction_task,
+            "hyperparameter_search",
+            search_elapsed_seconds,
+            machine_report,
+        )
 
     best_parameters = load_best_hyperparameters(search_results_path)
     print("Best hyperparameters loaded from CSV first row:")
@@ -799,6 +898,7 @@ def main() -> None:
         print("Search-only mode selected. Skipping final repeated runs.")
         return
 
+    training_start_time = time.perf_counter()
     test_multi(
         best_parameters,
         x_train,
@@ -811,6 +911,20 @@ def main() -> None:
         NUM_EPOCHS,
         args.runs,
         results_dir,
+    )
+    training_elapsed_seconds = time.perf_counter() - training_start_time
+    print_runtime_report(
+        "final_training_runs",
+        training_elapsed_seconds,
+        machine_report,
+    )
+    append_runtime_report(
+        results_dir,
+        args.dataset,
+        prediction_task,
+        "final_training_runs",
+        training_elapsed_seconds,
+        machine_report,
     )
 
 
