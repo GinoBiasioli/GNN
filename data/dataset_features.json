@@ -1,7 +1,6 @@
 {
     "bpi_2012": {
         "categorical": [
-            "Activity",
             "org:resource",
             "concept:name",
             "lifecycle:transition"

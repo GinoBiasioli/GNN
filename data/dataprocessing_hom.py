@@ -165,11 +165,16 @@ def normalize_categorical_value(value) -> str:
 
 ONE_HOT_ENCODERS = fit_one_hot_encoders(tab_all, categorical_columns)
 
-ACTIVITY_ENCODER = ONE_HOT_ENCODERS["Activity"]
+ACTIVITY_LABEL_COL = "concept:name" if "concept:name" in tab_all.columns else "Activity"
+activity_label_values = normalize_categorical_series(tab_all[ACTIVITY_LABEL_COL]).values.reshape(-1, 1)
+ACTIVITY_ENCODER = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+ACTIVITY_ENCODER.fit(activity_label_values)
 ACTIVITY_CLASSES = list(ACTIVITY_ENCODER.categories_[0])
 ACTIVITY_TO_INDEX = {cls_name: idx for idx, cls_name in enumerate(ACTIVITY_CLASSES)}
 
-RESOURCE_ENCODER = ONE_HOT_ENCODERS["org:resource"]
+resource_label_values = normalize_categorical_series(tab_all["org:resource"]).values.reshape(-1, 1)
+RESOURCE_ENCODER = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+RESOURCE_ENCODER.fit(resource_label_values)
 RESOURCE_CLASSES = list(RESOURCE_ENCODER.categories_[0])
 RESOURCE_TO_INDEX = {cls_name: idx for idx, cls_name in enumerate(RESOURCE_CLASSES)}
 
@@ -217,7 +222,7 @@ def build_event_chain_edges(prefix_len: int) -> torch.Tensor:
 
 
 def get_next_activity_label(trace: pd.DataFrame, next_event_idx: int) -> torch.Tensor:
-    next_activity = normalize_categorical_value(trace.iloc[next_event_idx]["Activity"])
+    next_activity = normalize_categorical_value(trace.iloc[next_event_idx][ACTIVITY_LABEL_COL])
     class_idx = ACTIVITY_TO_INDEX[next_activity]
     return torch.tensor([class_idx], dtype=torch.long)
 

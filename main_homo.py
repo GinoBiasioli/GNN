@@ -1,8 +1,11 @@
+import argparse
 import torch
 import numpy as np
 import pandas as pd
 import os
 import json 
+import platform
+import time
 from pathlib import Path
 import random
 import logging
@@ -17,10 +20,14 @@ from ax.service.managed_loop import optimize
 import pandas
 import torch.nn as nn
 from copy import deepcopy
+from datetime import datetime
 from torch_geometric.loader import DataLoader
 from torcheval.metrics.functional import multiclass_f1_score, multiclass_accuracy
 from ax.service.utils.report_utils import exp_to_df
 
+DEFAULT_DATASET = "bpi_2012"
+DEFAULT_TRIALS = 10
+DEFAULT_RUNS = 10
 
 
 # %%
@@ -70,6 +77,148 @@ def resolve_dir(env_var_name, default_path):
         return os.path.abspath(os.path.expanduser(env_value))
     return default_path
 
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Train a homogeneous GNN on prefix graphs."
+    )
+    parser.add_argument(
+        "dataset",
+        nargs="?",
+        default=os.environ.get("THESIS_DATASET", DEFAULT_DATASET),
+        help="Dataset folder under data/datasets/hom_graphs.",
+    )
+    parser.add_argument(
+        "--prediction-task",
+        choices=["next_activity", "next_event"],
+        default="next_activity",
+        help=(
+            "next_activity uses y_activity only. next_event uses y_activity, "
+            "y_resource, and y_time."
+        ),
+    )
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=50,
+        help="Maximum training epochs per run.",
+    )
+    parser.add_argument(
+        "--trials",
+        type=int,
+        default=DEFAULT_TRIALS,
+        help="Number of Ax hyperparameter-search trials.",
+    )
+    parser.add_argument(
+        "--runs",
+        type=int,
+        default=DEFAULT_RUNS,
+        help="Number of final repeated test runs.",
+    )
+    parser.add_argument(
+        "--smoke-test",
+        action="store_true",
+        help="Run the smoke-test configuration before the selected workflow.",
+    )
+    parser.add_argument(
+        "--smoke-only",
+        action="store_true",
+        help="Run only the smoke-test configuration and skip search/final repeated runs.",
+    )
+    parser.add_argument(
+        "--skip-search",
+        action="store_true",
+        help="Load the first row from the saved hyperparameter CSV and skip Ax search.",
+    )
+    parser.add_argument(
+        "--search-only",
+        action="store_true",
+        help="Run Ax search, save the hyperparameter CSV, and skip final repeated runs.",
+    )
+    args, _ = parser.parse_known_args()
+    return args
+
+
+def format_elapsed_time(elapsed_seconds):
+    return (
+        f"{elapsed_seconds:.2f}s "
+        f"({elapsed_seconds / 60:.2f} min, {elapsed_seconds / 3600:.2f} h)"
+    )
+
+
+def get_machine_report(device):
+    report = {
+        "timestamp": datetime.now().isoformat(timespec="seconds"),
+        "hostname": platform.node(),
+        "platform": platform.platform(),
+        "python_version": platform.python_version(),
+        "cpu_count": os.cpu_count(),
+        "torch_version": torch.__version__,
+        "torch_cuda_version": torch.version.cuda,
+        "cuda_available": torch.cuda.is_available(),
+        "device": str(device),
+        "gpu_count": torch.cuda.device_count(),
+        "gpu_name": None,
+        "gpu_total_memory_gb": None,
+        "gpu_capability": None,
+    }
+
+    if torch.cuda.is_available():
+        gpu_index = device.index if device.index is not None else torch.cuda.current_device()
+        props = torch.cuda.get_device_properties(gpu_index)
+        report.update(
+            {
+                "gpu_name": props.name,
+                "gpu_total_memory_gb": round(props.total_memory / (1024**3), 3),
+                "gpu_capability": f"{props.major}.{props.minor}",
+            }
+        )
+
+    return report
+
+
+def print_runtime_report(stage, elapsed_seconds, machine_report):
+    print("\nRuntime report")
+    print(f"Stage: {stage}")
+    print(f"Elapsed: {format_elapsed_time(elapsed_seconds)}")
+    print(f"Device: {machine_report['device']}")
+    print(f"GPU: {machine_report['gpu_name']}")
+    print(f"GPU memory (GB): {machine_report['gpu_total_memory_gb']}")
+    print(f"Torch: {machine_report['torch_version']}")
+    print(f"CUDA available: {machine_report['cuda_available']}")
+    print(f"CUDA version: {machine_report['torch_cuda_version']}")
+    print(f"CPU count: {machine_report['cpu_count']}")
+    print(f"Platform: {machine_report['platform']}")
+
+
+def append_runtime_report(
+    results_dir,
+    dataset,
+    prediction_task,
+    stage,
+    elapsed_seconds,
+    machine_report,
+):
+    record = {
+        "dataset": dataset,
+        "prediction_task": prediction_task,
+        "stage": stage,
+        "elapsed_seconds": round(elapsed_seconds, 4),
+        "elapsed_minutes": round(elapsed_seconds / 60, 4),
+        "elapsed_hours": round(elapsed_seconds / 3600, 4),
+        **machine_report,
+    }
+    path = os.path.join(results_dir, "runtime_report_homo.csv")
+    pd.DataFrame([record]).to_csv(
+        path,
+        mode="a",
+        header=not os.path.exists(path),
+        index=False,
+    )
+
+
+args = parse_args()
+
 pd.set_option("display.max_columns", None)
 
 data_dir_processed = resolve_dir(
@@ -89,13 +238,15 @@ print(root_path, data_dir_processed, data_dir_graphs, sep="\n")
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
+machine_report = get_machine_report(device)
+print_runtime_report("machine_setup", 0.0, machine_report)
 
 
 
 #%%
 PATIENCE = 10
-NUM_EPOCHS = 50
-TOT_TRIALS = 10
+NUM_EPOCHS = args.epochs
+TOT_TRIALS = args.trials
 
 #%%
 
@@ -106,13 +257,9 @@ with open(os.path.join(root_path, "data", "dataset_features.json"), "r") as file
 
 list(datasets_info.keys())
 
-DEFAULT_DATASET = "tiny_sp2020"
-
-
 def resolve_dataset_name(available_datasets, default_dataset):
-    cli_dataset = sys.argv[1] if len(sys.argv) > 1 else None
     env_dataset = os.environ.get("THESIS_DATASET")
-    dataset_name = cli_dataset or env_dataset or default_dataset
+    dataset_name = args.dataset or env_dataset or default_dataset
 
     if dataset_name not in available_datasets:
         available = ", ".join(sorted(available_datasets))
@@ -126,9 +273,10 @@ def resolve_dataset_name(available_datasets, default_dataset):
 
 dataset = resolve_dataset_name(datasets_info.keys(), DEFAULT_DATASET)
 print(f"Selected dataset: {dataset}")
-print(f"Results directory: {os.path.join(results_root_dir, dataset)}")
+print(f"Prediction task: {args.prediction_task}")
+print(f"Results directory: {os.path.join(results_root_dir, dataset, 'homo')}")
 
-results_dir = os.path.join(results_root_dir, dataset)
+results_dir = os.path.join(results_root_dir, dataset, "homo")
 os.makedirs(results_dir, exist_ok=True)
 
 
@@ -144,7 +292,8 @@ dataset_info
 categorical_columns = dataset_info["categorical"]
 real_value_columns = dataset_info["numerical"]
 
-required_categorical_targets = {"Activity", "org:resource"}
+activity_target_col = "concept:name" if "concept:name" in categorical_columns else "Activity"
+required_categorical_targets = {activity_target_col, "org:resource"}
 required_numerical_targets = {"time:timestamp"}
 
 missing_categorical_targets = required_categorical_targets - set(categorical_columns)
@@ -612,13 +761,16 @@ def test_homo_gnn(net, output_cat, output_real):
 
 
 all_activity_labels = [int(g.y_activity.item()) for g in X_TRAIN + X_VALID + X_TEST]
-all_resource_labels = [int(g.y_resource.item()) for g in X_TRAIN + X_VALID + X_TEST]
 
 outputcat = {
     "Activity": max(all_activity_labels) + 1,
-    "org:resource": max(all_resource_labels) + 1,
 }
-outputreal = {"time:timestamp": 1}
+outputreal = {}
+
+if args.prediction_task == "next_event":
+    all_resource_labels = [int(g.y_resource.item()) for g in X_TRAIN + X_VALID + X_TEST]
+    outputcat["org:resource"] = max(all_resource_labels) + 1
+    outputreal["time:timestamp"] = 1
 
 print(outputcat)
 print(outputreal)
@@ -668,74 +820,126 @@ def train_evaluate(config):
     return {"valid_loss": valid_loss}
 
 
-print("\nRunning smoke test before Ax optimize...")
-smoke_test_result = train_evaluate(DEBUG_SMOKE_TEST_CONFIG)
-print("Smoke test result:")
-print(smoke_test_result)
+def load_best_hyperparameters(search_results_path):
+    if not os.path.exists(search_results_path):
+        raise FileNotFoundError(
+            f"Could not find saved hyperparameter search results: {search_results_path}. "
+            "Run without --skip-search first."
+        )
+
+    search_results = pd.read_csv(search_results_path)
+    if search_results.empty:
+        raise ValueError(f"Hyperparameter search file is empty: {search_results_path}")
+
+    if "valid_loss" in search_results.columns:
+        search_results = search_results.sort_values(by="valid_loss")
+
+    best_row = search_results.iloc[0]
+    required_columns = ["hid", "layers", "lr", "batch_size"]
+    missing_columns = [col for col in required_columns if col not in best_row.index]
+    if missing_columns:
+        raise ValueError(
+            f"Hyperparameter search file is missing columns {missing_columns}: "
+            f"{search_results_path}"
+        )
+
+    return {
+        "hid": int(best_row["hid"]),
+        "layers": int(best_row["layers"]),
+        "lr": float(best_row["lr"]),
+        "batch_size": int(best_row["batch_size"]),
+    }
 
 
-best_parameters, values, experiment, model = optimize(
-    parameters=[
-        {
-            "name": "hid",
-            "type": "choice",
-            "values": [128],
-            "value_type": "int",
-            "is_ordered": True,
-            "sort_values": False
-        },
-        {
-            "name": "layers",
-            "type": "choice",
-            "values": [2, 4],
-            "value_type": "int",
-            "is_ordered": True,
-            "sort_values": False
-        },
-        {
-            "name": "lr",
-            "type": "range",
-            "bounds": [1e-4, 1e-2],
-            "value_type": "float",
-            "log_scale": True
-        },
-        {
-            "name": "batch_size",
-            "type": "choice",
-            "values": [128, 256, 512],
-            "value_type": "int",
-            "is_ordered": True,
-            "sort_values": False
-        },
-    ],
-    evaluation_function=train_evaluate,
-    objective_name="valid_loss",
-    arms_per_trial=1,
-    minimize=True,
-    random_seed=123,
-    total_trials=TOT_TRIALS
-)
+search_results_path = os.path.join(results_dir, "hyp_params_search_homo.csv")
 
+if args.smoke_test or args.smoke_only:
+    print("\nRunning smoke test...")
+    smoke_test_result = train_evaluate(DEBUG_SMOKE_TEST_CONFIG)
+    print("Smoke test result:")
+    print(smoke_test_result)
+
+if args.smoke_only:
+    print("Smoke-only mode selected. Skipping Ax optimization and final runs.")
+    sys.exit(0)
+
+if args.skip_search:
+    print(f"Skipping Ax search. Loading best hyperparameters from: {search_results_path}")
+else:
+    search_start_time = time.perf_counter()
+    best_parameters, values, experiment, model = optimize(
+        parameters=[
+            {
+                "name": "hid",
+                "type": "choice",
+                "values": [128],
+                "value_type": "int",
+                "is_ordered": True,
+                "sort_values": False
+            },
+            {
+                "name": "layers",
+                "type": "choice",
+                "values": [2, 4],
+                "value_type": "int",
+                "is_ordered": True,
+                "sort_values": False
+            },
+            {
+                "name": "lr",
+                "type": "range",
+                "bounds": [1e-4, 1e-2],
+                "value_type": "float",
+                "log_scale": True
+            },
+            {
+                "name": "batch_size",
+                "type": "choice",
+                "values": [128, 256, 512],
+                "value_type": "int",
+                "is_ordered": True,
+                "sort_values": False
+            },
+        ],
+        evaluation_function=train_evaluate,
+        objective_name="valid_loss",
+        arms_per_trial=1,
+        minimize=True,
+        random_seed=123,
+        total_trials=TOT_TRIALS
+    )
+    search_elapsed_seconds = time.perf_counter() - search_start_time
+
+    print(best_parameters)
+    means, covariances = values
+    print(means)
+    print(experiment)
+
+    results = exp_to_df(experiment)
+    results = results.sort_values(by="valid_loss")
+    results.to_csv(search_results_path, sep=",", index=False)
+    print(f"Saved homogeneous hyperparameter search results to: {search_results_path}")
+    print_runtime_report(
+        "hyperparameter_search",
+        search_elapsed_seconds,
+        machine_report,
+    )
+    append_runtime_report(
+        results_dir,
+        dataset,
+        args.prediction_task,
+        "hyperparameter_search",
+        search_elapsed_seconds,
+        machine_report,
+    )
+
+best_parameters = load_best_hyperparameters(search_results_path)
+print("Best hyperparameters loaded from CSV first row:")
 print(best_parameters)
-means, covariances = values
-print(means)
-print(experiment)
 
-### 
-
-
-results = exp_to_df(experiment)
-results = results.sort_values(by="valid_loss")
-
-#if not os.path.isdir(f"results/{dataset}"):
-#    os.mkdir(f"results/{dataset}")
-
-#results.to_csv(f"results/{dataset}/hyp_params_search.csv", sep=",", index=False)
-
-results_dir = os.path.join(results_root_dir, dataset)
-os.makedirs(results_dir, exist_ok=True)
-results.to_csv(os.path.join(results_dir, "hyp_params_search.csv"), sep=",", index=False)
-print(f"Saved hyperparameter search results to: {results_dir}")
+if args.search_only:
+    print("Search-only mode selected. Skipping final repeated runs.")
+    sys.exit(0)
 def create_df(results):
     res = {}
 
@@ -751,7 +955,7 @@ def test_multi(config, outputcat, outputreal, num_runs=10):
     res = []
 
 
-    save_path = os.path.join(results_root_dir, dataset)
+    save_path = results_dir
     os.makedirs(save_path, exist_ok=True)
     for i in range(num_runs):
         print(f"Run {i}")
@@ -774,17 +978,32 @@ def test_multi(config, outputcat, outputreal, num_runs=10):
         print(res[-1])
 
     results_table, means, stds = create_df(res)
-    results_table.to_csv(os.path.join(save_path, "results.csv"), sep=",", index=False)
+    results_table.to_csv(os.path.join(save_path, "results_homo.csv"), sep=",", index=False)
 
     pd.DataFrame(data={"mean": means, "std": stds}).to_csv(
-    os.path.join(save_path, "mean_and_stds.csv"),
+    os.path.join(save_path, "mean_and_stds_homo.csv"),
     sep=","
     )
 
     print(pd.DataFrame(data={"mean": means, "std": stds}))
-    print(f"Saved final evaluation results to: {save_path}")
+    print(f"Saved final homogeneous evaluation results to: {save_path}")
 
     return res
 
 
-test_multi(best_parameters, outputcat, outputreal, 10)
+training_start_time = time.perf_counter()
+test_multi(best_parameters, outputcat, outputreal, args.runs)
+training_elapsed_seconds = time.perf_counter() - training_start_time
+print_runtime_report(
+    "final_training_runs",
+    training_elapsed_seconds,
+    machine_report,
+)
+append_runtime_report(
+    results_dir,
+    dataset,
+    args.prediction_task,
+    "final_training_runs",
+    training_elapsed_seconds,
+    machine_report,
+)
