@@ -1,0 +1,93 @@
+{
+    "bpi_2012": {
+        "case_id_col": "CaseID",
+        "timestamp_col": "time:timestamp",
+        "activity_col": "concept:name",
+        "target_col": "next_activity",
+        "min_prefix_length": 2,
+        "categorical": [
+            "org:resource",
+            "concept:name",
+            "lifecycle:transition"
+        ],
+        "numerical": [
+            "time:timestamp",
+            "(case) AMOUNT_REQ"
+        ]
+    },
+    "bpi_2013": {
+        "case_id_col": "CaseID",
+        "timestamp_col": "time:timestamp",
+        "activity_col": "Activity",
+        "target_col": "next_activity",
+        "min_prefix_length": 2,
+        "categorical": [
+            "Activity",
+            "org:resource",
+            "impact",
+            "concept:name",
+            "lifecycle:transition",
+            "org:group",
+            "org:role",
+            "organization country",
+            "organization involved",
+            "product",
+            "resource country"
+        ],
+        "numerical": [
+            "time:timestamp"
+        ]
+    },
+    "sp2020": {
+        "case_id_col": "CaseID",
+        "timestamp_col": "time:timestamp",
+        "activity_col": "Activity",
+        "target_col": "next_activity",
+        "min_prefix_length": 2,
+        "categorical": [
+            "Activity",
+            "REPAIR_IN_TIME_5D",
+            "DEVICETYPE",
+            "org:resource"
+        ],
+        "numerical": [
+            "time:timestamp"
+        ]
+    },
+    "tiny_sp2020": {
+        "case_id_col": "CaseID",
+        "timestamp_col": "time:timestamp",
+        "activity_col": "Activity",
+        "target_col": "next_activity",
+        "min_prefix_length": 2,
+        "categorical": [
+            "Activity",
+            "REPAIR_IN_TIME_5D",
+            "DEVICETYPE",
+            "org:resource"
+        ],
+        "numerical": [
+            "time:timestamp"
+        ]
+    },
+    "BPI20_RequestForPayment": {
+        "case_id_col": "CaseID",
+        "timestamp_col": "time:timestamp",
+        "activity_col": "Activity",
+        "target_col": "next_activity",
+        "min_prefix_length": 2,
+        "categorical": [
+            "org:resource",
+            "Activity",
+            "org:role",
+            "case:Project",
+            "case:Task",
+            "case:OrganizationalEntity",
+            "case:Activity"
+        ],
+        "numerical": [
+            "time:timestamp",
+            "case:RequestedAmount"
+        ]
+    }
+}
