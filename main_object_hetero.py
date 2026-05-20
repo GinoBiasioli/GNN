@@ -120,6 +120,19 @@ def view_artifact_name(graph_view: str, base_name: str) -> str:
     return f"{graph_view}_{base_name}"
 
 
+def graph_view_file_stem(graph_view: str) -> str:
+    file_stems = {
+        "oc_base": "oc_base",
+        "oc_handover_probability": "oc_handover",
+        "oc_handover_context": "oc_context",
+    }
+    return file_stems.get(graph_view, graph_view)
+
+
+def split_file_name(split_name: str, graph_view: str) -> str:
+    return f"{split_name}_{graph_view_file_stem(graph_view)}.pt"
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Train a heterogeneous GNN on object-centric prefix graphs."
@@ -290,10 +303,6 @@ def load_dataset_file(
     file_name: str,
 ) -> tuple[list[HeteroData], dict]:
     path = join_graph_path(graph_dir, dataset, graph_view, file_name)
-    legacy_path = join_graph_path(graph_dir, dataset, file_name)
-
-    if not is_remote_path(path) and not os.path.exists(path) and os.path.exists(legacy_path):
-        path = legacy_path
 
     if is_remote_path(path):
         size = get_remote_file_size_gb(path)
@@ -323,22 +332,23 @@ def load_object_graph_splits(
     graph_view: str,
 ) -> tuple[list[HeteroData], list[HeteroData], list[HeteroData], list[dict]]:
     dataset_import_summaries = []
-    split_files = [
-        "train_set_object_hetero.pt",
-        "validation_set_object_hetero.pt",
-        "test_set_object_hetero.pt",
-    ]
+    split_names = ["train", "validation", "test"]
 
     loaded = {}
-    for file_name in tqdm(split_files):
-        data, summary = load_dataset_file(graph_dir, dataset, graph_view, file_name)
-        loaded[file_name] = data
+    for split_name in tqdm(split_names):
+        data, summary = load_dataset_file(
+            graph_dir,
+            dataset,
+            graph_view,
+            split_file_name(split_name, graph_view),
+        )
+        loaded[split_name] = data
         dataset_import_summaries.append(summary)
 
     return (
-        loaded["train_set_object_hetero.pt"],
-        loaded["validation_set_object_hetero.pt"],
-        loaded["test_set_object_hetero.pt"],
+        loaded["train"],
+        loaded["validation"],
+        loaded["test"],
         dataset_import_summaries,
     )
 
