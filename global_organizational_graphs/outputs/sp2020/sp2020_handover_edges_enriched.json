@@ -1,0 +1,98 @@
+[
+  {
+    "source_resource": "E",
+    "target_resource": "E",
+    "weight": 33234,
+    "activity_breakdown_out": "{\"Creation\": 4840, \"DeviceReceived\": 4840, \"InDelivery\": 4728, \"StockEntry\": 4103, \"NoteHotline\": 3636, \"Letter\": 3493, \"NoteWorkshop\": 3352, \"Approved\": 1138, \"Transmission\": 1122, \"StatusRequest\": 1112, \"Completed\": 863, \"FreeticketComp\": 5, \"FreeticketCust\": 2}",
+    "activity_breakdown_in": "{\"DeviceReceived\": 4840, \"InDelivery\": 4839, \"Completed\": 4837, \"StockEntry\": 4118, \"NoteWorkshop\": 3906, \"NoteHotline\": 3771, \"Letter\": 3455, \"Approved\": 1138, \"Transmission\": 1122, \"StatusRequest\": 1114, \"Creation\": 87, \"FreeticketComp\": 5, \"FreeticketCust\": 2}",
+    "dominant_activity_out": "Creation",
+    "dominant_activity_in": "DeviceReceived",
+    "avg_time_between_events": 131.79463598070237,
+    "median_time_between_events": 19.7758708675,
+    "activity_entropy": 3.2423411801516786
+  },
+  {
+    "source_resource": "G",
+    "target_resource": "G",
+    "weight": 6342,
+    "activity_breakdown_out": "{\"Creation\": 1094, \"DeviceReceived\": 1094, \"InDelivery\": 1088, \"NoteWorkshop\": 1060, \"Letter\": 1037, \"NoteHotline\": 548, \"Approved\": 196, \"Transmission\": 189, \"Completed\": 24, \"StatusRequest\": 7, \"StockEntry\": 5}",
+    "activity_breakdown_in": "{\"InDelivery\": 1094, \"Completed\": 1094, \"DeviceReceived\": 1093, \"NoteWorkshop\": 1061, \"Letter\": 1037, \"NoteHotline\": 550, \"Approved\": 197, \"Transmission\": 189, \"Creation\": 15, \"StatusRequest\": 7, \"StockEntry\": 5}",
+    "dominant_activity_out": "Creation",
+    "dominant_activity_in": "InDelivery",
+    "avg_time_between_events": 61.621924964476825,
+    "median_time_between_events": 12.14110979,
+    "activity_entropy": 2.8302853820612226
+  },
+  {
+    "source_resource": "J",
+    "target_resource": "J",
+    "weight": 8818,
+    "activity_breakdown_out": "{\"Creation\": 1488, \"DeviceReceived\": 1488, \"InDelivery\": 1481, \"NoteWorkshop\": 1372, \"NoteHotline\": 1016, \"Approved\": 655, \"Transmission\": 637, \"Letter\": 476, \"StatusRequest\": 124, \"Completed\": 64, \"StockEntry\": 17}",
+    "activity_breakdown_in": "{\"Completed\": 1488, \"InDelivery\": 1484, \"DeviceReceived\": 1482, \"NoteWorkshop\": 1400, \"NoteHotline\": 1040, \"Approved\": 657, \"Transmission\": 637, \"Letter\": 358, \"Creation\": 131, \"StatusRequest\": 124, \"StockEntry\": 17}",
+    "dominant_activity_out": "Creation",
+    "dominant_activity_in": "Completed",
+    "avg_time_between_events": 112.33086825301962,
+    "median_time_between_events": 28.6704522345,
+    "activity_entropy": 3.0107744377782306
+  },
+  {
+    "source_resource": "L",
+    "target_resource": "L",
+    "weight": 33847,
+    "activity_breakdown_out": "{\"Creation\": 5354, \"DeviceReceived\": 5350, \"InDelivery\": 5321, \"NoteHotline\": 4262, \"Letter\": 3530, \"Approved\": 3316, \"Transmission\": 3221, \"NoteWorkshop\": 1917, \"StatusRequest\": 1239, \"Completed\": 322, \"StockEntry\": 13, \"FreeticketComp\": 2}",
+    "activity_breakdown_in": "{\"InDelivery\": 5354, \"Completed\": 5354, \"DeviceReceived\": 5351, \"NoteHotline\": 4378, \"Letter\": 3389, \"Approved\": 3318, \"Transmission\": 3224, \"NoteWorkshop\": 2049, \"StatusRequest\": 1240, \"Creation\": 174, \"StockEntry\": 14, \"FreeticketComp\": 2}",
+    "dominant_activity_out": "Creation",
+    "dominant_activity_in": "InDelivery",
+    "avg_time_between_events": 189.6971062661321,
+    "median_time_between_events": 30.954388127,
+    "activity_entropy": 3.1073090639403973
+  },
+  {
+    "source_resource": "C",
+    "target_resource": "C",
+    "weight": 5,
+    "activity_breakdown_out": "{\"Creation\": 1, \"DeviceReceived\": 1, \"Letter\": 1, \"StockEntry\": 1, \"InDelivery\": 1}",
+    "activity_breakdown_in": "{\"DeviceReceived\": 1, \"Letter\": 1, \"StockEntry\": 1, \"InDelivery\": 1, \"Completed\": 1}",
+    "dominant_activity_out": "Creation",
+    "dominant_activity_in": "DeviceReceived",
+    "avg_time_between_events": 236.73539539339998,
+    "median_time_between_events": 45.737135741,
+    "activity_entropy": 2.321928094887362
+  },
+  {
+    "source_resource": "H",
+    "target_resource": "H",
+    "weight": 891,
+    "activity_breakdown_out": "{\"Creation\": 177, \"DeviceReceived\": 177, \"InDelivery\": 175, \"NoteWorkshop\": 109, \"NoteHotline\": 101, \"StatusRequest\": 59, \"Approved\": 28, \"Transmission\": 27, \"Letter\": 27, \"Completed\": 11}",
+    "activity_breakdown_in": "{\"DeviceReceived\": 177, \"InDelivery\": 177, \"Completed\": 177, \"NoteWorkshop\": 114, \"NoteHotline\": 104, \"StatusRequest\": 59, \"Approved\": 28, \"Transmission\": 27, \"Creation\": 26, \"Letter\": 2}",
+    "dominant_activity_out": "Creation",
+    "dominant_activity_in": "DeviceReceived",
+    "avg_time_between_events": 200.04847313926936,
+    "median_time_between_events": 37.622399918,
+    "activity_entropy": 2.9146516427223106
+  },
+  {
+    "source_resource": "I",
+    "target_resource": "I",
+    "weight": 482,
+    "activity_breakdown_out": "{\"Creation\": 113, \"DeviceReceived\": 113, \"InDelivery\": 112, \"Letter\": 49, \"NoteHotline\": 41, \"NoteWorkshop\": 41, \"Completed\": 6, \"Approved\": 4, \"Transmission\": 3}",
+    "activity_breakdown_in": "{\"InDelivery\": 113, \"DeviceReceived\": 113, \"Completed\": 113, \"NoteWorkshop\": 45, \"Letter\": 43, \"NoteHotline\": 42, \"Creation\": 6, \"Approved\": 4, \"Transmission\": 3}",
+    "dominant_activity_out": "Creation",
+    "dominant_activity_in": "InDelivery",
+    "avg_time_between_events": 69.16396802073237,
+    "median_time_between_events": 20.6499611,
+    "activity_entropy": 2.5923729336924044
+  },
+  {
+    "source_resource": "K",
+    "target_resource": "K",
+    "weight": 638,
+    "activity_breakdown_out": "{\"Creation\": 127, \"DeviceReceived\": 127, \"InDelivery\": 126, \"NoteWorkshop\": 84, \"NoteHotline\": 67, \"Letter\": 62, \"Transmission\": 18, \"Approved\": 18, \"StatusRequest\": 5, \"Completed\": 3, \"StockEntry\": 1}",
+    "activity_breakdown_in": "{\"DeviceReceived\": 127, \"InDelivery\": 127, \"Completed\": 127, \"NoteWorkshop\": 84, \"NoteHotline\": 69, \"Letter\": 50, \"Transmission\": 18, \"Approved\": 18, \"Creation\": 12, \"StatusRequest\": 5, \"StockEntry\": 1}",
+    "dominant_activity_out": "Creation",
+    "dominant_activity_in": "DeviceReceived",
+    "avg_time_between_events": 100.94779170623353,
+    "median_time_between_events": 25.456769709,
+    "activity_entropy": 2.8389050599283236
+  }
+]

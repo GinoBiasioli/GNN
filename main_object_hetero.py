@@ -10,6 +10,7 @@ import warnings
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlparse
 
 import numpy as np
 import pandas as pd
@@ -76,6 +77,49 @@ def resolve_dir(env_var_name: str, default_path: str) -> str:
     return default_path
 
 
+def is_remote_path(path: str) -> bool:
+    parsed = urlparse(path)
+    return parsed.scheme not in ("", None) and len(parsed.scheme) > 1
+
+
+def join_graph_path(base_path: str, *parts: str) -> str:
+    if is_remote_path(base_path):
+        return base_path.rstrip("/") + "/" + "/".join(part.strip("/") for part in parts)
+    return os.path.join(base_path, *parts)
+
+
+def load_remote_torch_file(path: str):
+    try:
+        import fsspec
+    except ImportError as exc:
+        raise ImportError(
+            f"Cannot read remote graph file '{path}' because fsspec is not installed. "
+            "Install fsspec and the filesystem backend for this URL, for example "
+            "'gcsfs' for gs:// paths, or download/mount the bucket locally."
+        ) from exc
+
+    with fsspec.open(path, "rb") as file:
+        return torch.load(file, weights_only=False)
+
+
+def get_remote_file_size_gb(path: str) -> float | None:
+    try:
+        import fsspec
+
+        fs, fs_path = fsspec.core.url_to_fs(path)
+        info = fs.info(fs_path)
+        size_bytes = info.get("size")
+        if size_bytes is None:
+            return None
+        return size_bytes / (1024**3)
+    except Exception:
+        return None
+
+
+def view_artifact_name(graph_view: str, base_name: str) -> str:
+    return f"{graph_view}_{base_name}"
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Train a heterogeneous GNN on object-centric prefix graphs."
@@ -93,6 +137,22 @@ def parse_args() -> argparse.Namespace:
         help=(
             "next_activity uses y_activity only. next_event uses y_activity, "
             "y_resource, and y_time when those labels are present."
+        ),
+    )
+    parser.add_argument(
+        "--graph-view",
+        default=os.environ.get("THESIS_GRAPH_VIEW", "oc_base"),
+        help=(
+            "Object graph view folder to train, for example oc_base, "
+            "oc_handover_probability, or oc_handover_context."
+        ),
+    )
+    parser.add_argument(
+        "--graph-dir",
+        default=os.environ.get("THESIS_OBJECT_GRAPHS_DIR"),
+        help=(
+            "Directory that contains one folder per dataset and graph view with "
+            "object heterogeneous graph .pt files. Supports local paths and gs:// URLs."
         ),
     )
     parser.add_argument(
@@ -199,6 +259,7 @@ def print_runtime_report(stage: str, elapsed_seconds: float, machine_report: dic
 def append_runtime_report(
     results_dir: str,
     dataset: str,
+    graph_view: str,
     prediction_task: str,
     stage: str,
     elapsed_seconds: float,
@@ -206,6 +267,7 @@ def append_runtime_report(
 ) -> None:
     record = {
         "dataset": dataset,
+        "graph_view": graph_view,
         "prediction_task": prediction_task,
         "stage": stage,
         "elapsed_seconds": round(elapsed_seconds, 4),
@@ -213,27 +275,53 @@ def append_runtime_report(
         "elapsed_hours": round(elapsed_seconds / 3600, 4),
         **machine_report,
     }
-    path = os.path.join(results_dir, "runtime_report_object_hetero.csv")
+    path = os.path.join(
+        results_dir,
+        view_artifact_name(graph_view, "runtime_report_object_hetero.csv"),
+    )
     report = pd.DataFrame([record])
     report.to_csv(path, mode="a", header=not os.path.exists(path), index=False)
 
 
-def load_dataset_file(graph_dir: str, dataset: str, file_name: str) -> tuple[list[HeteroData], dict]:
-    path = os.path.join(graph_dir, dataset, file_name)
-    size = os.path.getsize(path) / (1024**3)
-    print(f'\nImporting "{file_name}" ({size:.2f} GB)')
-    loaded_data = torch.load(path, weights_only=False)
+def load_dataset_file(
+    graph_dir: str,
+    dataset: str,
+    graph_view: str,
+    file_name: str,
+) -> tuple[list[HeteroData], dict]:
+    path = join_graph_path(graph_dir, dataset, graph_view, file_name)
+    legacy_path = join_graph_path(graph_dir, dataset, file_name)
+
+    if not is_remote_path(path) and not os.path.exists(path) and os.path.exists(legacy_path):
+        path = legacy_path
+
+    if is_remote_path(path):
+        size = get_remote_file_size_gb(path)
+        size_label = f"{size:.2f} GB" if size is not None else "remote size unavailable"
+        print(f'\nImporting "{file_name}" from {path} ({size_label})')
+        loaded_data = load_remote_torch_file(path)
+    else:
+        size = os.path.getsize(path) / (1024**3)
+        print(f'\nImporting "{file_name}" from {path} ({size:.2f} GB)')
+        loaded_data = torch.load(path, weights_only=False)
+
     summary = {
         "dataset": dataset,
+        "graph_view": graph_view,
         "file_name": file_name,
         "graphs_count": len(loaded_data),
-        "file_size_gb": round(size, 4),
+        "file_size_gb": round(size, 4) if size is not None else None,
+        "source_path": path,
     }
     print(f'Imported "{file_name}": {summary["graphs_count"]} graphs')
     return loaded_data, summary
 
 
-def load_object_graph_splits(graph_dir: str, dataset: str) -> tuple[list[HeteroData], list[HeteroData], list[HeteroData], list[dict]]:
+def load_object_graph_splits(
+    graph_dir: str,
+    dataset: str,
+    graph_view: str,
+) -> tuple[list[HeteroData], list[HeteroData], list[HeteroData], list[dict]]:
     dataset_import_summaries = []
     split_files = [
         "train_set_object_hetero.pt",
@@ -243,7 +331,7 @@ def load_object_graph_splits(graph_dir: str, dataset: str) -> tuple[list[HeteroD
 
     loaded = {}
     for file_name in tqdm(split_files):
-        data, summary = load_dataset_file(graph_dir, dataset, file_name)
+        data, summary = load_dataset_file(graph_dir, dataset, graph_view, file_name)
         loaded[file_name] = data
         dataset_import_summaries.append(summary)
 
@@ -263,6 +351,21 @@ def collect_metadata(graphs: list[HeteroData]) -> tuple[list[str], list[tuple[st
         node_types.update(graph_node_types)
         edge_types.update(graph_edge_types)
     return sorted(node_types), sorted(edge_types)
+
+
+def collect_edge_attr_dims(
+    graphs: list[HeteroData],
+    edge_types: list[tuple[str, str, str]],
+) -> dict[tuple[str, str, str], int | None]:
+    edge_attr_dims = {}
+    for edge_type in edge_types:
+        edge_attr_dims[edge_type] = None
+        for graph in graphs:
+            edge_store = graph[edge_type]
+            if hasattr(edge_store, "edge_attr") and edge_store.edge_attr is not None:
+                edge_attr_dims[edge_type] = int(edge_store.edge_attr.shape[-1])
+                break
+    return edge_attr_dims
 
 
 def has_label(graph: HeteroData, attr_name: str) -> bool:
@@ -341,6 +444,7 @@ class ObjectHeteroGNN(Module):
         output_cat: dict[str, int],
         output_real: dict[str, int],
         edge_types: list[tuple[str, str, str]],
+        edge_attr_dims: dict[tuple[str, str, str], int | None],
         parameters: dict,
         target_node_type: str = TARGET_NODE_TYPE,
     ) -> None:
@@ -365,6 +469,7 @@ class ObjectHeteroGNN(Module):
                         concat=False,
                         add_self_loops=False,
                         residual=False,
+                        edge_dim=edge_attr_dims.get(relation),
                     )
                     for relation in edge_types
                 },
@@ -381,9 +486,22 @@ class ObjectHeteroGNN(Module):
 
     def forward(self, batch: HeteroData) -> dict[str, torch.Tensor]:
         x_dict = batch.x_dict
+        edge_attr_dict = {
+            edge_type: batch[edge_type].edge_attr
+            for edge_type in batch.edge_types
+            if hasattr(batch[edge_type], "edge_attr")
+            and batch[edge_type].edge_attr is not None
+        }
 
         for conv in self.convs:
-            x_dict = conv(x_dict, batch.edge_index_dict)
+            if edge_attr_dict:
+                x_dict = conv(
+                    x_dict,
+                    batch.edge_index_dict,
+                    edge_attr_dict=edge_attr_dict,
+                )
+            else:
+                x_dict = conv(x_dict, batch.edge_index_dict)
             x_dict = {node_type: F.relu(x) for node_type, x in x_dict.items()}
 
         pooled = global_mean_pool(
@@ -500,6 +618,7 @@ def train_object_hgnn(
     output_cat: dict[str, int],
     output_real: dict[str, int],
     edge_types: list[tuple[str, str, str]],
+    edge_attr_dims: dict[tuple[str, str, str], int | None],
     device: torch.device,
     num_epochs: int,
 ) -> tuple[dict, ObjectHeteroGNN]:
@@ -510,6 +629,7 @@ def train_object_hgnn(
         output_cat=output_cat,
         output_real=output_real,
         edge_types=edge_types,
+        edge_attr_dims=edge_attr_dims,
     ).to(device)
 
     criterion_cat = nn.CrossEntropyLoss()
@@ -659,10 +779,12 @@ def test_multi(
     output_cat: dict[str, int],
     output_real: dict[str, int],
     edge_types: list[tuple[str, str, str]],
+    edge_attr_dims: dict[tuple[str, str, str], int | None],
     device: torch.device,
     num_epochs: int,
     num_runs: int,
     save_path: str,
+    graph_view: str,
 ) -> list[dict]:
     results = []
     os.makedirs(save_path, exist_ok=True)
@@ -677,6 +799,7 @@ def test_multi(
             output_cat,
             output_real,
             edge_types,
+            edge_attr_dims,
             device,
             num_epochs,
         )
@@ -697,9 +820,18 @@ def test_multi(
         print(results[-1])
 
     results_table, means, stds = create_df(results)
-    results_table.to_csv(os.path.join(save_path, "results_object_hetero.csv"), index=False)
+    results_table.to_csv(
+        os.path.join(
+            save_path,
+            view_artifact_name(graph_view, "results_object_hetero.csv"),
+        ),
+        index=False,
+    )
     pd.DataFrame({"mean": means, "std": stds}).to_csv(
-        os.path.join(save_path, "mean_and_stds_object_hetero.csv")
+        os.path.join(
+            save_path,
+            view_artifact_name(graph_view, "mean_and_stds_object_hetero.csv"),
+        )
     )
     print(pd.DataFrame({"mean": means, "std": stds}))
     print(f"Saved final object-hetero evaluation results to: {save_path}")
@@ -716,7 +848,7 @@ def main() -> None:
     torch.serialization.add_safe_globals([HeteroData])
 
     root_path = resolve_project_root()
-    graph_dir = resolve_dir(
+    graph_dir = args.graph_dir or resolve_dir(
         "THESIS_OBJECT_GRAPHS_DIR",
         os.path.join(root_path, "data", "datasets", DEFAULT_GRAPH_FOLDER_NAME),
     )
@@ -724,7 +856,12 @@ def main() -> None:
         "THESIS_RESULTS_DIR",
         os.path.join(root_path, "results"),
     )
-    results_dir = os.path.join(results_root_dir, args.dataset, "object_hetero")
+    results_dir = os.path.join(
+        results_root_dir,
+        args.dataset,
+        "object_hetero",
+        args.graph_view,
+    )
     os.makedirs(results_dir, exist_ok=True)
 
     pd.set_option("display.max_columns", None)
@@ -734,21 +871,31 @@ def main() -> None:
     machine_report = get_machine_report(device)
     print(root_path, graph_dir, results_dir, sep="\n")
     print(f"Selected dataset: {args.dataset}")
+    print(f"Selected graph view: {args.graph_view}")
     print(f"Using device: {device}")
     print_runtime_report("machine_setup", 0.0, machine_report)
 
     x_train, x_valid, x_test, import_summaries = load_object_graph_splits(
         graph_dir,
         args.dataset,
+        args.graph_view,
     )
     pd.DataFrame(import_summaries).to_csv(
-        os.path.join(results_dir, "dataset_import_summary_object_hetero.csv"),
+        os.path.join(
+            results_dir,
+            view_artifact_name(
+                args.graph_view,
+                "dataset_import_summary_object_hetero.csv",
+            ),
+        ),
         index=False,
     )
 
     node_types, edge_types = collect_metadata(x_train + x_valid + x_test)
+    edge_attr_dims = collect_edge_attr_dims(x_train + x_valid + x_test, edge_types)
     print("Node types:", node_types)
     print("Edge types:", edge_types)
+    print("Edge attribute dimensions:", edge_attr_dims)
 
     prediction_task = resolve_prediction_task(args.prediction_task, x_train[0])
     print(f"Prediction task: {prediction_task}")
@@ -763,7 +910,7 @@ def main() -> None:
     print("Numerical outputs:", output_real)
     search_results_path = os.path.join(
         results_dir,
-        "hyp_params_search_object_hetero.csv",
+        view_artifact_name(args.graph_view, "hyp_params_search_object_hetero.csv"),
     )
 
     debug_smoke_test_config = {
@@ -783,6 +930,7 @@ def main() -> None:
                 output_cat,
                 output_real,
                 edge_types,
+                edge_attr_dims,
                 device,
                 NUM_EPOCHS,
             )
@@ -884,6 +1032,7 @@ def main() -> None:
         append_runtime_report(
             results_dir,
             args.dataset,
+            args.graph_view,
             prediction_task,
             "hyperparameter_search",
             search_elapsed_seconds,
@@ -907,10 +1056,12 @@ def main() -> None:
         output_cat,
         output_real,
         edge_types,
+        edge_attr_dims,
         device,
         NUM_EPOCHS,
         args.runs,
         results_dir,
+        args.graph_view,
     )
     training_elapsed_seconds = time.perf_counter() - training_start_time
     print_runtime_report(
@@ -921,6 +1072,7 @@ def main() -> None:
     append_runtime_report(
         results_dir,
         args.dataset,
+        args.graph_view,
         prediction_task,
         "final_training_runs",
         training_elapsed_seconds,

@@ -1,0 +1,100 @@
+{
+  "C|||C": {
+    "Creation": 1,
+    "DeviceReceived": 1,
+    "InDelivery": 1,
+    "Letter": 1,
+    "StockEntry": 1
+  },
+  "E|||E": {
+    "Approved": 1138,
+    "Completed": 863,
+    "Creation": 4840,
+    "DeviceReceived": 4840,
+    "FreeticketComp": 5,
+    "FreeticketCust": 2,
+    "InDelivery": 4732,
+    "Letter": 3490,
+    "NoteHotline": 3635,
+    "NoteWorkshop": 3353,
+    "StatusRequest": 1112,
+    "StockEntry": 4102,
+    "Transmission": 1122
+  },
+  "G|||G": {
+    "Approved": 196,
+    "Completed": 24,
+    "Creation": 1094,
+    "DeviceReceived": 1094,
+    "InDelivery": 1088,
+    "Letter": 1037,
+    "NoteHotline": 548,
+    "NoteWorkshop": 1060,
+    "StatusRequest": 7,
+    "StockEntry": 5,
+    "Transmission": 189
+  },
+  "H|||H": {
+    "Approved": 28,
+    "Completed": 11,
+    "Creation": 177,
+    "DeviceReceived": 177,
+    "InDelivery": 175,
+    "Letter": 27,
+    "NoteHotline": 101,
+    "NoteWorkshop": 109,
+    "StatusRequest": 59,
+    "Transmission": 27
+  },
+  "I|||I": {
+    "Approved": 4,
+    "Completed": 6,
+    "Creation": 113,
+    "DeviceReceived": 113,
+    "InDelivery": 112,
+    "Letter": 49,
+    "NoteHotline": 41,
+    "NoteWorkshop": 41,
+    "Transmission": 3
+  },
+  "J|||J": {
+    "Approved": 655,
+    "Completed": 64,
+    "Creation": 1488,
+    "DeviceReceived": 1488,
+    "InDelivery": 1481,
+    "Letter": 476,
+    "NoteHotline": 1016,
+    "NoteWorkshop": 1372,
+    "StatusRequest": 124,
+    "StockEntry": 17,
+    "Transmission": 637
+  },
+  "K|||K": {
+    "Approved": 18,
+    "Completed": 3,
+    "Creation": 127,
+    "DeviceReceived": 127,
+    "InDelivery": 126,
+    "Letter": 62,
+    "NoteHotline": 67,
+    "NoteWorkshop": 84,
+    "StatusRequest": 5,
+    "StockEntry": 1,
+    "Transmission": 18
+  },
+  "L|||L": {
+    "Approved": 3316,
+    "Completed": 322,
+    "Creation": 5354,
+    "DeviceReceived": 5350,
+    "FreeticketComp": 2,
+    "InDelivery": 5322,
+    "Letter": 3529,
+    "NoteHotline": 4262,
+    "NoteWorkshop": 1917,
+    "StatusRequest": 1239,
+    "StockEntry": 13,
+    "Transmission": 3221
+  }
+}

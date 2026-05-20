@@ -1,0 +1,98 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key id="d7" for="edge" attr.name="activity_entropy" attr.type="double"/>
+<key id="d6" for="edge" attr.name="median_time_between_events" attr.type="double"/>
+<key id="d5" for="edge" attr.name="avg_time_between_events" attr.type="double"/>
+<key id="d4" for="edge" attr.name="dominant_activity_in" attr.type="string"/>
+<key id="d3" for="edge" attr.name="dominant_activity_out" attr.type="string"/>
+<key id="d2" for="edge" attr.name="activity_breakdown_in" attr.type="string"/>
+<key id="d1" for="edge" attr.name="activity_breakdown_out" attr.type="string"/>
+<key id="d0" for="edge" attr.name="weight" attr.type="long"/>
+<graph edgedefault="directed"><node id="E"/>
+<node id="G"/>
+<node id="J"/>
+<node id="L"/>
+<node id="C"/>
+<node id="H"/>
+<node id="I"/>
+<node id="K"/>
+<edge source="E" target="E">
+  <data key="d0">33234</data>
+  <data key="d1">{"Creation": 4840, "DeviceReceived": 4840, "InDelivery": 4728, "StockEntry": 4103, "NoteHotline": 3636, "Letter": 3493, "NoteWorkshop": 3352, "Approved": 1138, "Transmission": 1122, "StatusRequest": 1112, "Completed": 863, "FreeticketComp": 5, "FreeticketCust": 2}</data>
+  <data key="d2">{"DeviceReceived": 4840, "InDelivery": 4839, "Completed": 4837, "StockEntry": 4118, "NoteWorkshop": 3906, "NoteHotline": 3771, "Letter": 3455, "Approved": 1138, "Transmission": 1122, "StatusRequest": 1114, "Creation": 87, "FreeticketComp": 5, "FreeticketCust": 2}</data>
+  <data key="d3">Creation</data>
+  <data key="d4">DeviceReceived</data>
+  <data key="d5">131.79463598070237</data>
+  <data key="d6">19.7758708675</data>
+  <data key="d7">3.2423411801516786</data>
+</edge>
+<edge source="G" target="G">
+  <data key="d0">6342</data>
+  <data key="d1">{"Creation": 1094, "DeviceReceived": 1094, "InDelivery": 1088, "NoteWorkshop": 1060, "Letter": 1037, "NoteHotline": 548, "Approved": 196, "Transmission": 189, "Completed": 24, "StatusRequest": 7, "StockEntry": 5}</data>
+  <data key="d2">{"InDelivery": 1094, "Completed": 1094, "DeviceReceived": 1093, "NoteWorkshop": 1061, "Letter": 1037, "NoteHotline": 550, "Approved": 197, "Transmission": 189, "Creation": 15, "StatusRequest": 7, "StockEntry": 5}</data>
+  <data key="d3">Creation</data>
+  <data key="d4">InDelivery</data>
+  <data key="d5">61.621924964476825</data>
+  <data key="d6">12.14110979</data>
+  <data key="d7">2.8302853820612226</data>
+</edge>
+<edge source="J" target="J">
+  <data key="d0">8818</data>
+  <data key="d1">{"Creation": 1488, "DeviceReceived": 1488, "InDelivery": 1481, "NoteWorkshop": 1372, "NoteHotline": 1016, "Approved": 655, "Transmission": 637, "Letter": 476, "StatusRequest": 124, "Completed": 64, "StockEntry": 17}</data>
+  <data key="d2">{"Completed": 1488, "InDelivery": 1484, "DeviceReceived": 1482, "NoteWorkshop": 1400, "NoteHotline": 1040, "Approved": 657, "Transmission": 637, "Letter": 358, "Creation": 131, "StatusRequest": 124, "StockEntry": 17}</data>
+  <data key="d3">Creation</data>
+  <data key="d4">Completed</data>
+  <data key="d5">112.33086825301962</data>
+  <data key="d6">28.6704522345</data>
+  <data key="d7">3.0107744377782306</data>
+</edge>
+<edge source="L" target="L">
+  <data key="d0">33847</data>
+  <data key="d1">{"Creation": 5354, "DeviceReceived": 5350, "InDelivery": 5321, "NoteHotline": 4262, "Letter": 3530, "Approved": 3316, "Transmission": 3221, "NoteWorkshop": 1917, "StatusRequest": 1239, "Completed": 322, "StockEntry": 13, "FreeticketComp": 2}</data>
+  <data key="d2">{"InDelivery": 5354, "Completed": 5354, "DeviceReceived": 5351, "NoteHotline": 4378, "Letter": 3389, "Approved": 3318, "Transmission": 3224, "NoteWorkshop": 2049, "StatusRequest": 1240, "Creation": 174, "StockEntry": 14, "FreeticketComp": 2}</data>
+  <data key="d3">Creation</data>
+  <data key="d4">InDelivery</data>
+  <data key="d5">189.6971062661321</data>
+  <data key="d6">30.954388127</data>
+  <data key="d7">3.1073090639403973</data>
+</edge>
+<edge source="C" target="C">
+  <data key="d0">5</data>
+  <data key="d1">{"Creation": 1, "DeviceReceived": 1, "Letter": 1, "StockEntry": 1, "InDelivery": 1}</data>
+  <data key="d2">{"DeviceReceived": 1, "Letter": 1, "StockEntry": 1, "InDelivery": 1, "Completed": 1}</data>
+  <data key="d3">Creation</data>
+  <data key="d4">DeviceReceived</data>
+  <data key="d5">236.73539539339998</data>
+  <data key="d6">45.737135741</data>
+  <data key="d7">2.321928094887362</data>
+</edge>
+<edge source="H" target="H">
+  <data key="d0">891</data>
+  <data key="d1">{"Creation": 177, "DeviceReceived": 177, "InDelivery": 175, "NoteWorkshop": 109, "NoteHotline": 101, "StatusRequest": 59, "Approved": 28, "Transmission": 27, "Letter": 27, "Completed": 11}</data>
+  <data key="d2">{"DeviceReceived": 177, "InDelivery": 177, "Completed": 177, "NoteWorkshop": 114, "NoteHotline": 104, "StatusRequest": 59, "Approved": 28, "Transmission": 27, "Creation": 26, "Letter": 2}</data>
+  <data key="d3">Creation</data>
+  <data key="d4">DeviceReceived</data>
+  <data key="d5">200.04847313926936</data>
+  <data key="d6">37.622399918</data>
+  <data key="d7">2.9146516427223106</data>
+</edge>
+<edge source="I" target="I">
+  <data key="d0">482</data>
+  <data key="d1">{"Creation": 113, "DeviceReceived": 113, "InDelivery": 112, "Letter": 49, "NoteHotline": 41, "NoteWorkshop": 41, "Completed": 6, "Approved": 4, "Transmission": 3}</data>
+  <data key="d2">{"InDelivery": 113, "DeviceReceived": 113, "Completed": 113, "NoteWorkshop": 45, "Letter": 43, "NoteHotline": 42, "Creation": 6, "Approved": 4, "Transmission": 3}</data>
+  <data key="d3">Creation</data>
+  <data key="d4">InDelivery</data>
+  <data key="d5">69.16396802073237</data>
+  <data key="d6">20.6499611</data>
+  <data key="d7">2.5923729336924044</data>
+</edge>
+<edge source="K" target="K">
+  <data key="d0">638</data>
+  <data key="d1">{"Creation": 127, "DeviceReceived": 127, "InDelivery": 126, "NoteWorkshop": 84, "NoteHotline": 67, "Letter": 62, "Transmission": 18, "Approved": 18, "StatusRequest": 5, "Completed": 3, "StockEntry": 1}</data>
+  <data key="d2">{"DeviceReceived": 127, "InDelivery": 127, "Completed": 127, "NoteWorkshop": 84, "NoteHotline": 69, "Letter": 50, "Transmission": 18, "Approved": 18, "Creation": 12, "StatusRequest": 5, "StockEntry": 1}</data>
+  <data key="d3">Creation</data>
+  <data key="d4">DeviceReceived</data>
+  <data key="d5">100.94779170623353</data>
+  <data key="d6">25.456769709</data>
+  <data key="d7">2.8389050599283236</data>
+</edge>
+</graph></graphml>

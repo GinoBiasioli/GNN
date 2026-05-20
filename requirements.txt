@@ -9,3 +9,5 @@ matplotlib
 networkx
 scipy
 tqdm
+fsspec
+gcsfs

@@ -1,0 +1,228 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key id="d7" for="edge" attr.name="activity_entropy" attr.type="double"/>
+<key id="d6" for="edge" attr.name="median_time_between_events" attr.type="double"/>
+<key id="d5" for="edge" attr.name="avg_time_between_events" attr.type="double"/>
+<key id="d4" for="edge" attr.name="dominant_activity_in" attr.type="string"/>
+<key id="d3" for="edge" attr.name="dominant_activity_out" attr.type="string"/>
+<key id="d2" for="edge" attr.name="activity_breakdown_in" attr.type="string"/>
+<key id="d1" for="edge" attr.name="activity_breakdown_out" attr.type="string"/>
+<key id="d0" for="edge" attr.name="weight" attr.type="long"/>
+<graph edgedefault="directed"><node id="EMPLOYEE"/>
+<node id="SUPERVISOR"/>
+<node id="MISSING"/>
+<node id="PRE_APPROVER"/>
+<node id="UNDEFINED"/>
+<node id="DIRECTOR"/>
+<node id="ADMINISTRATION"/>
+<node id="BUDGET OWNER"/>
+<edge source="EMPLOYEE" target="SUPERVISOR">
+  <data key="d0">711</data>
+  <data key="d1">{"Request For Payment SUBMITTED by EMPLOYEE": 711}</data>
+  <data key="d2">{"Request For Payment FINAL_APPROVED by SUPERVISOR": 656, "Request For Payment REJECTED by SUPERVISOR": 43, "Request For Payment APPROVED by SUPERVISOR": 12}</data>
+  <data key="d3">Request For Payment SUBMITTED by EMPLOYEE</data>
+  <data key="d4">Request For Payment FINAL_APPROVED by SUPERVISOR</data>
+  <data key="d5">1019.2115898262125</data>
+  <data key="d6">0.142357547</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="EMPLOYEE" target="PRE_APPROVER">
+  <data key="d0">464</data>
+  <data key="d1">{"Request For Payment SUBMITTED by EMPLOYEE": 464}</data>
+  <data key="d2">{"Request For Payment APPROVED by PRE_APPROVER": 413, "Request For Payment REJECTED by PRE_APPROVER": 51}</data>
+  <data key="d3">Request For Payment SUBMITTED by EMPLOYEE</data>
+  <data key="d4">Request For Payment APPROVED by PRE_APPROVER</data>
+  <data key="d5">498.1874250889418</data>
+  <data key="d6">0.09999068550000001</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="EMPLOYEE" target="EMPLOYEE">
+  <data key="d0">381</data>
+  <data key="d1">{"Request For Payment REJECTED by EMPLOYEE": 380, "Request For Payment SUBMITTED by EMPLOYEE": 1}</data>
+  <data key="d2">{"Request For Payment SUBMITTED by EMPLOYEE": 379, "Request For Payment SAVED by EMPLOYEE": 1, "Request For Payment REJECTED by EMPLOYEE": 1}</data>
+  <data key="d3">Request For Payment REJECTED by EMPLOYEE</data>
+  <data key="d4">Request For Payment SUBMITTED by EMPLOYEE</data>
+  <data key="d5">2056.9056289232494</data>
+  <data key="d6">108.362623151</data>
+  <data key="d7">0.026284638501825438</data>
+</edge>
+<edge source="EMPLOYEE" target="ADMINISTRATION">
+  <data key="d0">3324</data>
+  <data key="d1">{"Request For Payment SUBMITTED by EMPLOYEE": 3324}</data>
+  <data key="d2">{"Request For Payment APPROVED by ADMINISTRATION": 2863, "Request For Payment REJECTED by ADMINISTRATION": 460, "Request For Payment FOR_APPROVAL by ADMINISTRATION": 1}</data>
+  <data key="d3">Request For Payment SUBMITTED by EMPLOYEE</data>
+  <data key="d4">Request For Payment APPROVED by ADMINISTRATION</data>
+  <data key="d5">189.85601917258663</data>
+  <data key="d6">0.0524823495</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="SUPERVISOR" target="MISSING">
+  <data key="d0">65</data>
+  <data key="d1">{"Request For Payment FINAL_APPROVED by SUPERVISOR": 65}</data>
+  <data key="d2">{"Request For Payment REJECTED by MISSING": 65}</data>
+  <data key="d3">Request For Payment FINAL_APPROVED by SUPERVISOR</data>
+  <data key="d4">Request For Payment REJECTED by MISSING</data>
+  <data key="d5">18958.12973498946</data>
+  <data key="d6">951.780805755</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="SUPERVISOR" target="UNDEFINED">
+  <data key="d0">3732</data>
+  <data key="d1">{"Request For Payment FINAL_APPROVED by SUPERVISOR": 3731, "Request For Payment APPROVED by SUPERVISOR": 1}</data>
+  <data key="d2">{"Request Payment": 3731, "Payment Handled": 1}</data>
+  <data key="d3">Request For Payment FINAL_APPROVED by SUPERVISOR</data>
+  <data key="d4">Request Payment</data>
+  <data key="d5">1454.5383825427105</data>
+  <data key="d6">337.604520149</data>
+  <data key="d7">0.003565979369602788</data>
+</edge>
+<edge source="SUPERVISOR" target="EMPLOYEE">
+  <data key="d0">130</data>
+  <data key="d1">{"Request For Payment REJECTED by SUPERVISOR": 130}</data>
+  <data key="d2">{"Request For Payment REJECTED by EMPLOYEE": 127, "Request For Payment SUBMITTED by EMPLOYEE": 3}</data>
+  <data key="d3">Request For Payment REJECTED by SUPERVISOR</data>
+  <data key="d4">Request For Payment REJECTED by EMPLOYEE</data>
+  <data key="d5">2809.734889811654</data>
+  <data key="d6">378.328159041</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="SUPERVISOR" target="DIRECTOR">
+  <data key="d0">25</data>
+  <data key="d1">{"Request For Payment APPROVED by SUPERVISOR": 25}</data>
+  <data key="d2">{"Request For Payment FINAL_APPROVED by DIRECTOR": 25}</data>
+  <data key="d3">Request For Payment APPROVED by SUPERVISOR</data>
+  <data key="d4">Request For Payment FINAL_APPROVED by DIRECTOR</data>
+  <data key="d5">4659.789083209839</data>
+  <data key="d6">927.869561475</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="MISSING" target="EMPLOYEE">
+  <data key="d0">25</data>
+  <data key="d1">{"Request For Payment REJECTED by MISSING": 25}</data>
+  <data key="d2">{"Request For Payment SUBMITTED by EMPLOYEE": 25}</data>
+  <data key="d3">Request For Payment REJECTED by MISSING</data>
+  <data key="d4">Request For Payment SUBMITTED by EMPLOYEE</data>
+  <data key="d5">47030.7658433736</data>
+  <data key="d6">279.655311922</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="PRE_APPROVER" target="SUPERVISOR">
+  <data key="d0">412</data>
+  <data key="d1">{"Request For Payment APPROVED by PRE_APPROVER": 412}</data>
+  <data key="d2">{"Request For Payment FINAL_APPROVED by SUPERVISOR": 409, "Request For Payment REJECTED by SUPERVISOR": 3}</data>
+  <data key="d3">Request For Payment APPROVED by PRE_APPROVER</data>
+  <data key="d4">Request For Payment FINAL_APPROVED by SUPERVISOR</data>
+  <data key="d5">1773.8296747640243</data>
+  <data key="d6">487.4423724345</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="PRE_APPROVER" target="EMPLOYEE">
+  <data key="d0">51</data>
+  <data key="d1">{"Request For Payment REJECTED by PRE_APPROVER": 51}</data>
+  <data key="d2">{"Request For Payment REJECTED by EMPLOYEE": 51}</data>
+  <data key="d3">Request For Payment REJECTED by PRE_APPROVER</data>
+  <data key="d4">Request For Payment REJECTED by EMPLOYEE</data>
+  <data key="d5">2224.368240567353</data>
+  <data key="d6">317.134029134</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="PRE_APPROVER" target="DIRECTOR">
+  <data key="d0">1</data>
+  <data key="d1">{"Request For Payment APPROVED by PRE_APPROVER": 1}</data>
+  <data key="d2">{"Request For Payment FINAL_APPROVED by DIRECTOR": 1}</data>
+  <data key="d3">Request For Payment APPROVED by PRE_APPROVER</data>
+  <data key="d4">Request For Payment FINAL_APPROVED by DIRECTOR</data>
+  <data key="d5">205.720572269</data>
+  <data key="d6">205.720572269</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="UNDEFINED" target="UNDEFINED">
+  <data key="d0">3754</data>
+  <data key="d1">{"Request Payment": 3754}</data>
+  <data key="d2">{"Payment Handled": 3754}</data>
+  <data key="d3">Request Payment</data>
+  <data key="d4">Payment Handled</data>
+  <data key="d5">1374.2929554588984</data>
+  <data key="d6">693.341409938</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="UNDEFINED" target="MISSING">
+  <data key="d0">1</data>
+  <data key="d1">{"Request Payment": 1}</data>
+  <data key="d2">{"Request For Payment REJECTED by MISSING": 1}</data>
+  <data key="d3">Request Payment</data>
+  <data key="d4">Request For Payment REJECTED by MISSING</data>
+  <data key="d5">0.400451256</data>
+  <data key="d6">0.400451256</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="DIRECTOR" target="UNDEFINED">
+  <data key="d0">24</data>
+  <data key="d1">{"Request For Payment FINAL_APPROVED by DIRECTOR": 24}</data>
+  <data key="d2">{"Request Payment": 24}</data>
+  <data key="d3">Request For Payment FINAL_APPROVED by DIRECTOR</data>
+  <data key="d4">Request Payment</data>
+  <data key="d5">1507.8527798220832</data>
+  <data key="d6">483.13661421300003</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="DIRECTOR" target="SUPERVISOR">
+  <data key="d0">1</data>
+  <data key="d1">{"Request For Payment FINAL_APPROVED by DIRECTOR": 1}</data>
+  <data key="d2">{"Request For Payment APPROVED by SUPERVISOR": 1}</data>
+  <data key="d3">Request For Payment FINAL_APPROVED by DIRECTOR</data>
+  <data key="d4">Request For Payment APPROVED by SUPERVISOR</data>
+  <data key="d5">0.0</data>
+  <data key="d6">0.0</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="ADMINISTRATION" target="EMPLOYEE">
+  <data key="d0">460</data>
+  <data key="d1">{"Request For Payment REJECTED by ADMINISTRATION": 459, "Request For Payment FOR_APPROVAL by ADMINISTRATION": 1}</data>
+  <data key="d2">{"Request For Payment REJECTED by EMPLOYEE": 452, "Request For Payment SUBMITTED by EMPLOYEE": 8}</data>
+  <data key="d3">Request For Payment REJECTED by ADMINISTRATION</data>
+  <data key="d4">Request For Payment REJECTED by EMPLOYEE</data>
+  <data key="d5">631.6986670401934</data>
+  <data key="d6">238.376665411</data>
+  <data key="d7">0.02236220827711901</data>
+</edge>
+<edge source="ADMINISTRATION" target="SUPERVISOR">
+  <data key="d0">1776</data>
+  <data key="d1">{"Request For Payment APPROVED by ADMINISTRATION": 1776}</data>
+  <data key="d2">{"Request For Payment FINAL_APPROVED by SUPERVISOR": 1707, "Request For Payment REJECTED by SUPERVISOR": 61, "Request For Payment APPROVED by SUPERVISOR": 8}</data>
+  <data key="d3">Request For Payment APPROVED by ADMINISTRATION</data>
+  <data key="d4">Request For Payment FINAL_APPROVED by SUPERVISOR</data>
+  <data key="d5">449.4572923266729</data>
+  <data key="d6">196.66086466899998</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="ADMINISTRATION" target="BUDGET OWNER">
+  <data key="d0">1087</data>
+  <data key="d1">{"Request For Payment APPROVED by ADMINISTRATION": 1087}</data>
+  <data key="d2">{"Request For Payment APPROVED by BUDGET OWNER": 1062, "Request For Payment REJECTED by BUDGET OWNER": 25}</data>
+  <data key="d3">Request For Payment APPROVED by ADMINISTRATION</data>
+  <data key="d4">Request For Payment APPROVED by BUDGET OWNER</data>
+  <data key="d5">385.16587692386014</data>
+  <data key="d6">171.665563723</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="BUDGET OWNER" target="SUPERVISOR">
+  <data key="d0">1062</data>
+  <data key="d1">{"Request For Payment APPROVED by BUDGET OWNER": 1062}</data>
+  <data key="d2">{"Request For Payment FINAL_APPROVED by SUPERVISOR": 1034, "Request For Payment REJECTED by SUPERVISOR": 23, "Request For Payment APPROVED by SUPERVISOR": 5}</data>
+  <data key="d3">Request For Payment APPROVED by BUDGET OWNER</data>
+  <data key="d4">Request For Payment FINAL_APPROVED by SUPERVISOR</data>
+  <data key="d5">627.3192851010781</data>
+  <data key="d6">461.768389738</data>
+  <data key="d7">0.0</data>
+</edge>
+<edge source="BUDGET OWNER" target="EMPLOYEE">
+  <data key="d0">25</data>
+  <data key="d1">{"Request For Payment REJECTED by BUDGET OWNER": 25}</data>
+  <data key="d2">{"Request For Payment REJECTED by EMPLOYEE": 25}</data>
+  <data key="d3">Request For Payment REJECTED by BUDGET OWNER</data>
+  <data key="d4">Request For Payment REJECTED by EMPLOYEE</data>
+  <data key="d5">276.57595545227997</data>
+  <data key="d6">179.885912158</data>
+  <data key="d7">0.0</data>
+</edge>
+</graph></graphml>

@@ -23,6 +23,45 @@
                 "encode_source_as_feature": true
             }
         },
+        "active_graph_view": "oc_base",
+        "graph_views": {
+            "oc_base": {
+                "description": "Object-centric prefix graph without resource-to-resource organizational edges.",
+                "include_resource_handover_edges": false
+            },
+            "oc_handover_probability": {
+                "description": "Object-centric prefix graph with resource handover edges weighted by source transition probability.",
+                "include_resource_handover_edges": true,
+                "resource_handover": {
+                    "source_path": "global_organizational_graphs/outputs/bpi_2012/bpi_2012_handover_edges_enriched.csv",
+                    "source_resource_col": "source_resource",
+                    "target_resource_col": "target_resource",
+                    "node_type": "resource",
+                    "edge_type": "handover",
+                    "weight_attribute": "source_transition_probability",
+                    "edge_attributes": [
+                        "source_transition_probability"
+                    ]
+                }
+            },
+            "oc_handover_context": {
+                "description": "Object-centric prefix graph with resource handover probability plus compact temporal and activity-context attributes.",
+                "include_resource_handover_edges": true,
+                "resource_handover": {
+                    "source_path": "global_organizational_graphs/outputs/bpi_2012/bpi_2012_handover_edges_enriched.csv",
+                    "source_resource_col": "source_resource",
+                    "target_resource_col": "target_resource",
+                    "node_type": "resource",
+                    "edge_type": "handover",
+                    "weight_attribute": "source_transition_probability",
+                    "edge_attributes": [
+                        "source_transition_probability",
+                        "median_time_between_events_normalized",
+                        "activity_entropy_normalized"
+                    ]
+                }
+            }
+        },
         "exclude_cols": [
             "Activity",
             "org:resource"

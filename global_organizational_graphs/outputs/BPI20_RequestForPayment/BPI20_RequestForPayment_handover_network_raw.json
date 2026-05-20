@@ -1,0 +1,67 @@
+{
+  "ADMINISTRATION|||BUDGET OWNER": {
+    "Request For Payment APPROVED by ADMINISTRATION": 1087
+  },
+  "ADMINISTRATION|||EMPLOYEE": {
+    "Request For Payment FOR_APPROVAL by ADMINISTRATION": 1,
+    "Request For Payment REJECTED by ADMINISTRATION": 459
+  },
+  "ADMINISTRATION|||SUPERVISOR": {
+    "Request For Payment APPROVED by ADMINISTRATION": 1776
+  },
+  "BUDGET OWNER|||EMPLOYEE": {
+    "Request For Payment REJECTED by BUDGET OWNER": 25
+  },
+  "BUDGET OWNER|||SUPERVISOR": {
+    "Request For Payment APPROVED by BUDGET OWNER": 1058
+  },
+  "BUDGET OWNER|||UNDEFINED": {
+    "Request For Payment APPROVED by BUDGET OWNER": 4
+  },
+  "DIRECTOR|||UNDEFINED": {
+    "Request For Payment FINAL_APPROVED by DIRECTOR": 25
+  },
+  "EMPLOYEE|||ADMINISTRATION": {
+    "Request For Payment SUBMITTED by EMPLOYEE": 3324
+  },
+  "EMPLOYEE|||EMPLOYEE": {
+    "Request For Payment REJECTED by EMPLOYEE": 380,
+    "Request For Payment SUBMITTED by EMPLOYEE": 1
+  },
+  "EMPLOYEE|||PRE_APPROVER": {
+    "Request For Payment SUBMITTED by EMPLOYEE": 464
+  },
+  "EMPLOYEE|||SUPERVISOR": {
+    "Request For Payment SUBMITTED by EMPLOYEE": 711
+  },
+  "MISSING|||EMPLOYEE": {
+    "Request For Payment REJECTED by MISSING": 25
+  },
+  "PRE_APPROVER|||EMPLOYEE": {
+    "Request For Payment REJECTED by PRE_APPROVER": 51
+  },
+  "PRE_APPROVER|||SUPERVISOR": {
+    "Request For Payment APPROVED by PRE_APPROVER": 413
+  },
+  "SUPERVISOR|||DIRECTOR": {
+    "Request For Payment APPROVED by SUPERVISOR": 26
+  },
+  "SUPERVISOR|||EMPLOYEE": {
+    "Request For Payment REJECTED by SUPERVISOR": 130
+  },
+  "SUPERVISOR|||MISSING": {
+    "Request For Payment FINAL_APPROVED by SUPERVISOR": 65
+  },
+  "SUPERVISOR|||UNDEFINED": {
+    "Request For Payment FINAL_APPROVED by SUPERVISOR": 3731
+  },
+  "UNDEFINED|||MISSING": {
+    "Request Payment": 1
+  },
+  "UNDEFINED|||SUPERVISOR": {
+    "Request Payment": 4
+  },
+  "UNDEFINED|||UNDEFINED": {
+    "Request Payment": 3750
+  }
+}
