@@ -88,6 +88,34 @@ def join_graph_path(base_path: str, *parts: str) -> str:
     return os.path.join(base_path, *parts)
 
 
+def graph_file_candidates(
+    graph_dir: str,
+    dataset: str,
+    graph_view: str,
+    file_name: str,
+) -> list[str]:
+    return [
+        join_graph_path(graph_dir, dataset, graph_view, file_name),
+        join_graph_path(graph_dir, graph_view, dataset, file_name),
+    ]
+
+
+def remote_path_exists(path: str) -> bool:
+    try:
+        import fsspec
+
+        fs, fs_path = fsspec.core.url_to_fs(path)
+        return fs.exists(fs_path)
+    except Exception:
+        return False
+
+
+def graph_file_exists(path: str) -> bool:
+    if is_remote_path(path):
+        return remote_path_exists(path)
+    return os.path.exists(path)
+
+
 def load_remote_torch_file(path: str):
     try:
         import fsspec
@@ -302,7 +330,13 @@ def load_dataset_file(
     graph_view: str,
     file_name: str,
 ) -> tuple[list[HeteroData], dict]:
-    path = join_graph_path(graph_dir, dataset, graph_view, file_name)
+    candidate_paths = graph_file_candidates(graph_dir, dataset, graph_view, file_name)
+    path = next((candidate for candidate in candidate_paths if graph_file_exists(candidate)), None)
+    if path is None:
+        candidates = "\n".join(f"- {candidate}" for candidate in candidate_paths)
+        raise FileNotFoundError(
+            f"Could not find object graph file '{file_name}'. Tried:\n{candidates}"
+        )
 
     if is_remote_path(path):
         size = get_remote_file_size_gb(path)
