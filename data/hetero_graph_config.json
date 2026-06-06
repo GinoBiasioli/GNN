@@ -28,9 +28,7 @@
             "concept:name",
             "lifecycle:transition",
             "org:group",
-            "org:role",
             "organization country",
-            "organization involved",
             "product",
             "resource country"
         ],
@@ -77,11 +75,9 @@
         "target_col": "next_activity",
         "min_prefix_length": 2,
         "categorical": [
-            "org:resource",
             "Activity",
             "org:role",
             "case:Project",
-            "case:Task",
             "case:OrganizationalEntity",
             "case:Activity"
         ],
