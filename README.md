@@ -1,8 +1,9 @@
 
 ## Object hetero: SP2020 next activity with OC handover probability
 
-Use these commands on the VM to run only the hyperparameter search first and then
-the final repeated training runs for `sp2020` with `oc_handover_probability`.
+Use this command on the VM to run the hyperparameter search first and then
+immediately run the final repeated training runs for `sp2020` with
+`oc_handover_probability`.
 
 ```powershell
 git pull origin main
@@ -15,7 +16,7 @@ needed:
 pip install -r requirements.txt
 ```
 
-Hyperparameter search only:
+Hyperparameter search followed by final training:
 
 ```bash
 python main_object_hetero.py sp2020 \
@@ -24,20 +25,7 @@ python main_object_hetero.py sp2020 \
   --graph-dir "gs://graphs-thesis/object hetero graphs" \
   --trials 10 \
   --epochs 50 \
-  --search-only
-```
-
-Final training with the best hyperparameters saved by the search:
-
-```bash
-python main_object_hetero.py sp2020 \
-  --prediction-task next_activity \
-  --graph-view oc_handover_probability \
-  --graph-dir "gs://graphs-thesis/object hetero graphs" \
-  --trials 10 \
-  --epochs 50 \
-  --runs 10 \
-  --skip-search
+  --runs 10
 ```
 
 The script writes outputs under:
