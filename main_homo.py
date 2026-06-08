@@ -135,8 +135,7 @@ def parse_args():
         action="store_true",
         help="Run Ax search, save the hyperparameter CSV, and skip final repeated runs.",
     )
-    args, _ = parser.parse_known_args()
-    return args
+    return parser.parse_args()
 
 
 def format_elapsed_time(elapsed_seconds):
@@ -218,6 +217,7 @@ def append_runtime_report(
 
 
 args = parse_args()
+workflow_start_time = time.perf_counter()
 
 pd.set_option("display.max_columns", None)
 
@@ -328,6 +328,7 @@ def load_dataset(name):
         "file_name": name,
         "graphs_count": len(loaded_data),
         "file_size_gb": round(size, 4),
+        "source_path": path,
     }
 
     print(
@@ -349,7 +350,7 @@ for name in tqdm(["train_set_homo.pt","validation_set_homo.pt","test_set_homo.pt
 
     dataset_import_summaries.append(summary)
 
-dataset_import_summary_path = os.path.join(results_dir, "dataset_import_summary.csv")
+dataset_import_summary_path = os.path.join(results_dir, "dataset_import_summary_homo.csv")
 pd.DataFrame(dataset_import_summaries).to_csv(
     dataset_import_summary_path,
     index=False,
@@ -861,6 +862,16 @@ if args.smoke_test or args.smoke_only:
 
 if args.smoke_only:
     print("Smoke-only mode selected. Skipping Ax optimization and final runs.")
+    workflow_elapsed_seconds = time.perf_counter() - workflow_start_time
+    print_runtime_report("total_workflow", workflow_elapsed_seconds, machine_report)
+    append_runtime_report(
+        results_dir,
+        dataset,
+        args.prediction_task,
+        "total_workflow",
+        workflow_elapsed_seconds,
+        machine_report,
+    )
     sys.exit(0)
 
 if args.skip_search:
@@ -939,6 +950,16 @@ print(best_parameters)
 
 if args.search_only:
     print("Search-only mode selected. Skipping final repeated runs.")
+    workflow_elapsed_seconds = time.perf_counter() - workflow_start_time
+    print_runtime_report("total_workflow", workflow_elapsed_seconds, machine_report)
+    append_runtime_report(
+        results_dir,
+        dataset,
+        args.prediction_task,
+        "total_workflow",
+        workflow_elapsed_seconds,
+        machine_report,
+    )
     sys.exit(0)
 def create_df(results):
     res = {}
@@ -1005,5 +1026,15 @@ append_runtime_report(
     args.prediction_task,
     "final_training_runs",
     training_elapsed_seconds,
+    machine_report,
+)
+workflow_elapsed_seconds = time.perf_counter() - workflow_start_time
+print_runtime_report("total_workflow", workflow_elapsed_seconds, machine_report)
+append_runtime_report(
+    results_dir,
+    dataset,
+    args.prediction_task,
+    "total_workflow",
+    workflow_elapsed_seconds,
     machine_report,
 )

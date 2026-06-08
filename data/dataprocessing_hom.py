@@ -1,3 +1,4 @@
+import argparse
 import os
 import json
 from math import log
@@ -51,6 +52,22 @@ def resolve_project_root():
 root_path = resolve_project_root()
 
 
+DEFAULT_DATASET = "bpi_2012"
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Build homogeneous prefix graphs from processed event logs."
+    )
+    parser.add_argument(
+        "dataset",
+        nargs="?",
+        default=os.environ.get("THESIS_DATASET", DEFAULT_DATASET),
+        help="Dataset key defined in data/dataset_features.json.",
+    )
+    return parser.parse_args()
+
+
 def resolve_dir(env_var_name, default_path):
     env_value = os.environ.get(env_var_name)
     if env_value:
@@ -75,10 +92,7 @@ print(root_path, data_dir_processed, data_dir_graphs, sep="\n")
 
 
 
-#dataset = "BPI20_RequestForPayment"
-dataset = "bpi_2012"
-#dataset = "bpi_2013"
-#dataset = "sp2020"
+dataset = parse_args().dataset
 
 
 

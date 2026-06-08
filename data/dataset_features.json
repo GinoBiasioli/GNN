@@ -18,9 +18,7 @@
             "concept:name",
             "lifecycle:transition",
             "org:group",
-            "org:role",
             "organization country",
-            "organization involved",
             "product",
             "resource country"
         ],
@@ -52,11 +50,9 @@
     },
     "BPI20_RequestForPayment":{
         "categorical": [
-            "org:resource",
             "Activity",
             "org:role",
             "case:Project",
-            "case:Task",
             "case:OrganizationalEntity",
             "case:Activity"
         ],
