@@ -7,6 +7,7 @@ import json
 import platform
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 import random
 import logging
 import sys
@@ -95,6 +96,14 @@ def parse_args():
         help=(
             "next_activity uses y_activity only. next_event uses y_activity, "
             "y_resource, and y_time."
+        ),
+    )
+    parser.add_argument(
+        "--graph-dir",
+        default=os.environ.get("THESIS_HOM_GRAPHS_DIR"),
+        help=(
+            "Directory that contains one folder per dataset with train/validation/test "
+            "homogeneous graph .pt files. Supports local paths and gs:// URLs."
         ),
     )
     parser.add_argument(
@@ -216,6 +225,45 @@ def append_runtime_report(
     )
 
 
+def is_remote_path(path):
+    parsed = urlparse(path)
+    return parsed.scheme not in ("", None) and len(parsed.scheme) > 1
+
+
+def join_graph_path(base_path, *parts):
+    if is_remote_path(base_path):
+        return base_path.rstrip("/") + "/" + "/".join(part.strip("/") for part in parts)
+    return os.path.join(base_path, *parts)
+
+
+def load_remote_torch_file(path):
+    try:
+        import fsspec
+    except ImportError as exc:
+        raise ImportError(
+            f"Cannot read remote graph file '{path}' because fsspec is not installed. "
+            "Install fsspec and the filesystem backend for this URL, for example "
+            "'gcsfs' for gs:// paths, or download/mount the bucket locally."
+        ) from exc
+
+    with fsspec.open(path, "rb") as file:
+        return torch.load(file, weights_only=False)
+
+
+def get_remote_file_size_gb(path):
+    try:
+        import fsspec
+
+        fs, fs_path = fsspec.core.url_to_fs(path)
+        info = fs.info(fs_path)
+        size_bytes = info.get("size")
+        if size_bytes is None:
+            return None
+        return size_bytes / (1024**3)
+    except Exception:
+        return None
+
+
 args = parse_args()
 workflow_start_time = time.perf_counter()
 
@@ -225,7 +273,7 @@ data_dir_processed = resolve_dir(
     "THESIS_PROCESSED_DIR",
     os.path.join(root_path, "data", "datasets", "processed"),
 )
-data_dir_graphs = resolve_dir(
+data_dir_graphs = args.graph_dir or resolve_dir(
     "THESIS_GRAPHS_DIR",
     os.path.join(root_path, "data", "datasets", "hom_graphs"),
 )
@@ -293,7 +341,7 @@ categorical_columns = dataset_info["categorical"]
 real_value_columns = dataset_info["numerical"]
 
 activity_target_col = "concept:name" if "concept:name" in categorical_columns else "Activity"
-required_categorical_targets = {activity_target_col, "org:resource"}
+required_categorical_targets = {activity_target_col}
 required_numerical_targets = {"time:timestamp"}
 
 missing_categorical_targets = required_categorical_targets - set(categorical_columns)
@@ -318,16 +366,22 @@ data_dir_graphs
 #%%
 
 def load_dataset(name):
-    path = os.path.join(data_dir_graphs, dataset, name)
-    size = os.path.getsize(path) / (1024**3)
-    print(f'\nImporting "{name}" ({size:.2f} GB)')
-    loaded_data = torch.load(path, weights_only=False)
+    path = join_graph_path(data_dir_graphs, dataset, name)
+    if is_remote_path(path):
+        size = get_remote_file_size_gb(path)
+        size_label = f"{size:.2f} GB" if size is not None else "remote size unavailable"
+        print(f'\nImporting "{name}" from {path} ({size_label})')
+        loaded_data = load_remote_torch_file(path)
+    else:
+        size = os.path.getsize(path) / (1024**3)
+        print(f'\nImporting "{name}" from {path} ({size:.2f} GB)')
+        loaded_data = torch.load(path, weights_only=False)
 
     summary = {
         "dataset": dataset,
         "file_name": name,
         "graphs_count": len(loaded_data),
-        "file_size_gb": round(size, 4),
+        "file_size_gb": round(size, 4) if size is not None else None,
         "source_path": path,
     }
 
